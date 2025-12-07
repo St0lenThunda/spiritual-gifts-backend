@@ -1,10 +1,10 @@
 from fastapi import FastAPI
-from routes.questions import router as questions_router
+from routes.api import router as api_router
 
 app = FastAPI()
 
-@app.get("/")
+@app.get("/")   
 def root():
     return {"message": "Spiritual Gifts API Running"}
 
-app.include_router(questions_router)
+app.include_router(api_router)
