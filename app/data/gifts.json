@@ -1,0 +1,270 @@
+{
+  "Administration": {
+    "name": "Administration",
+    "definition": "The ability to organize people, resources, and time to help the church reach its goals and be effective.",
+    "scriptures": [
+      "1 Cor. 12:28"
+    ],
+    "traits": [
+      "Organized",
+      "Efficient",
+      "Planner",
+      "Goal-oriented"
+    ]
+  },
+  "Apostleship": {
+    "name": "Apostleship",
+    "definition": "The ability to start new ministries and oversee their development, often in new places or cultures.",
+    "scriptures": [
+      "1 Cor. 12:28",
+      "Eph. 4:11"
+    ],
+    "traits": [
+      "Pioneer",
+      "Visionary",
+      "Entrepreneurial",
+      "Risk-taker"
+    ]
+  },
+  "Discernment": {
+    "name": "Discernment",
+    "definition": "The ability to distinguish between truth and error, and to sense the presence of good or evil spirits.",
+    "scriptures": [
+      "1 Cor. 12:10"
+    ],
+    "traits": [
+      "Perceptive",
+      "Insightful",
+      "Intuitive",
+      "Protective"
+    ]
+  },
+  "Evangelism": {
+        "name": "Evangelism",
+    "definition": "The ability to communicate the gospel effectively so that unbelievers become disciples of Jesus.",
+    "scriptures": [
+      "Eph. 4:11"
+    ],
+    "traits": [
+      "Persuasive",
+      "Sociable",
+      "Passionate",
+      "Bold"
+    ]
+  },
+  "Exhortation": {
+    "name": "Exhortation",
+    "definition": "The ability to encourage, comfort, and challenge others to grow in their faith and overcome struggles.",
+    "scriptures": [
+      "Rom. 12:8"
+    ],
+    "traits": [
+      "Encouraging",
+      "Motivating",
+      "Positive",
+      "Counseling"
+    ]
+  },
+  "Faith": {
+    "name": "Faith",
+    "definition": "The ability to trust God for what cannot be seen and to act on God's promises with confidence.",
+    "scriptures": [
+      "1 Cor. 12:9"
+    ],
+    "traits": [
+      "Trusting",
+      "Optimistic",
+      "Confident",
+      "Visionary"
+    ]
+  },
+  "Giving": {
+    "name": "Giving",
+    "definition": "The ability to contribute material resources to the work of the Lord with liberality and cheerfulness.",
+    "scriptures": [
+      "Rom. 12:8"
+    ],
+    "traits": [
+      "Generous",
+      "Steward",
+      "Resourceful",
+      "Joyful"
+    ]
+  },
+  "Healing": {
+    "name": "Healing",
+    "definition": "The ability to be used by God to restore health to the sick through prayer and reliance on the Holy Spirit.",
+    "scriptures": [
+      "1 Cor. 12:9",
+      "1 Cor. 12:28"
+    ],
+    "traits": [
+      "Compassionate",
+      "Prayer-oriented",
+      "Faith-filled",
+      "Restorative"
+    ]
+  },
+  "Hospitality": {
+    "name": "Hospitality",
+    "definition": "The ability to welcome and care for guests and strangers with a warm and generous spirit.",
+    "scriptures": [
+      "1 Pet. 4:9"
+    ],
+    "traits": [
+      "Welcoming",
+      "Friendly",
+      "Gracious",
+      "Inviting"
+    ]
+  },
+  "Knowledge": {
+    "name": "Knowledge",
+    "definition": "The ability to discover, accumulate, analyze, and clarify information and ideas that are pertinent to the growth and well-being of the body.",
+    "scriptures": [
+      "1 Cor. 12:8"
+    ],
+    "traits": [
+      "Studious",
+      "Inquisitive",
+      "Observant",
+      "Insightful"
+    ]
+  },
+  "Leadership": {
+    "name": "Leadership",
+    "definition": "The ability to set goals in accordance with God's purpose for the future and to communicate these goals to others in such a way that they voluntarily and harmoniously work together to accomplish those goals.",
+    "scriptures": [
+      "Rom. 12:8"
+    ],
+    "traits": [
+      "Influential",
+      "Visionary",
+      "Decisive",
+      "Motivating"
+    ]
+  },
+  "Mercy": {
+    "name": "Mercy",
+    "definition": "The ability to feel genuine empathy and compassion for individuals who suffer distressing physical, mental, or emotional problems and to translate that compassion into cheerfully done deeds that reflect Christ's love and alleviate the suffering.",
+    "scriptures": [
+      "Rom. 12:8"
+    ],
+    "traits": [
+      "Compassionate",
+      "Sensitive",
+      "Loving",
+      "Supportive"
+    ]
+  },
+  "Miracles": {
+    "name": "Miracles",
+    "definition": "The ability to serve as a human intermediary through whom it pleases God to perform powerful acts that are perceived by observers to have altered the ordinary course of nature.",
+    "scriptures": [
+      "1 Cor. 12:10",
+      "1 Cor. 12:28"
+    ],
+    "traits": [
+      "Faith-filled",
+      "Bold",
+      "Prayer-oriented",
+      "Expectant"
+    ]
+  },
+  "Pastor/Shepherd": {
+    "name": "Pastor/Shepherd",
+    "definition": "The ability to assume a long-term personal responsibility for the spiritual welfare of a group of believers.",
+    "scriptures": [
+      "Eph. 4:11"
+    ],
+    "traits": [
+      "Nurturing",
+      "Protective",
+      "Guiding",
+      "Relational"
+    ]
+  },
+  "Prophecy": {
+    "name": "Prophecy",
+    "definition": "The ability to proclaim and apply God's truth in a relevant manner for understanding, correction, or edification.",
+    "scriptures": [
+      "Rom. 12:6",
+      "1 Cor. 12:10",
+      "1 Cor. 12:28",
+      "Eph. 4:11"
+    ],
+    "traits": [
+      "Truth-teller",
+      "Insightful",
+      "Direct",
+      "Convicting"
+    ]
+  },
+  "Service/Helps": {
+    "name": "Service/Helps",
+    "definition": "The ability to identify unmet needs involved in a task related to God's work, and to make use of available resources to meet those needs and help accomplish the desired results.",
+    "scriptures": [
+      "Rom. 12:7",
+      "1 Cor. 12:28"
+    ],
+    "traits": [
+      "Practical",
+      "Helpful",
+      "Reliable",
+      "Supportive"
+    ]
+  },
+  "Teaching": {
+    "name": "Teaching",
+    "definition": "The ability to communicate information relevant to the health and ministry of the body and its members in such a way that others will learn.",
+    "scriptures": [
+      "Rom. 12:7",
+      "1 Cor. 12:28",
+      "Eph. 4:11"
+    ],
+    "traits": [
+      "Clear",
+      "Systematic",
+      "Articulate",
+      "Instructive"
+    ]
+  },
+  "Tongues": {
+    "name": "Tongues",
+    "definition": "The ability to receive and communicate an immediate message of God to His people through a divinely anointed utterance in a language never learned.",
+    "scriptures": [
+      "1 Cor. 12:10",
+      "1 Cor. 12:28"
+    ],
+    "traits": [
+      "Spiritual",
+      "Expressive",
+      "Prayer-oriented"
+    ]
+  },
+  "Interpretation": {
+    "name": "Interpretation",
+    "definition": "The ability to make known in the vernacular the message of one who speaks in tongues.",
+    "scriptures": [
+      "1 Cor. 12:10"
+    ],
+    "traits": [
+      "Discerning",
+      "Spiritual",
+      "Articulate"
+    ]
+  },
+  "Wisdom": {
+    "name": "Wisdom",
+    "definition": "The ability to apply spiritual truth effectively to meet a need in a specific situation.",
+    "scriptures": [
+      "1 Cor. 12:8"
+    ],
+    "traits": [
+      "Practical",
+      "Insightful",
+      "Sensible",
+      "Problem-solver"
+    ]
+  }
+}

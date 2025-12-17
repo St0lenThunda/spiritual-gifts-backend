@@ -1,0 +1,407 @@
+{
+  "assessment": {
+    "title": "Spiritual Gifts Assessment",
+    "questions": [
+      {
+        "id": 1,
+        "text": "I like organizing services and events.",
+        "gift": "Administration"
+      },
+      {
+        "id": 2,
+        "text": "I would enjoy starting new churches.",
+        "gift": "Apostleship"
+      },
+      {
+        "id": 3,
+        "text": "I enjoy challenging people to grow spiritually.",
+        "gift": "Exhortation"
+      },
+      {
+        "id": 4,
+        "text": "I willingly give time and resources to others.",
+        "gift": "Giving"
+      },
+      {
+        "id": 5,
+        "text": "I enjoy learning and applying Scripture.",
+        "gift": "Knowledge"
+      },
+      {
+        "id": 6,
+        "text": "I like working behind the scenes to help others.",
+        "gift": "Service"
+      },
+      {
+        "id": 7,
+        "text": "I enjoy encouraging people who are hurting.",
+        "gift": "Mercy"
+      },
+      {
+        "id": 8,
+        "text": "I find it natural to help people understand the Bible.",
+        "gift": "Teaching"
+      },
+      {
+        "id": 9,
+        "text": "I enjoy developing long-term relationships with others.",
+        "gift": "Pastor/Shepherd"
+      },
+      {
+        "id": 10,
+        "text": "I enjoy introducing others to faith in Christ.",
+        "gift": "Evangelism"
+      },
+      {
+        "id": 11,
+        "text": "I like coordinating details and tasks.",
+        "gift": "Administration"
+      },
+      {
+        "id": 12,
+        "text": "I often have ideas for ministries that don’t exist yet.",
+        "gift": "Apostleship"
+      },
+      {
+        "id": 13,
+        "text": "I like helping people solve personal problems.",
+        "gift": "Exhortation"
+      },
+      {
+        "id": 14,
+        "text": "I feel fulfilled when giving to people in need.",
+        "gift": "Giving"
+      },
+      {
+        "id": 15,
+        "text": "I like researching biblical topics.",
+        "gift": "Knowledge"
+      },
+      {
+        "id": 16,
+        "text": "I prefer supporting roles over being upfront.",
+        "gift": "Service"
+      },
+      {
+        "id": 17,
+        "text": "I am sensitive to the feelings of others.",
+        "gift": "Mercy"
+      },
+      {
+        "id": 18,
+        "text": "I like explaining spiritual truths to others.",
+        "gift": "Teaching"
+      },
+      {
+        "id": 19,
+        "text": "I care deeply about spiritual growth in others.",
+        "gift": "Pastor/Shepherd"
+      },
+      {
+        "id": 20,
+        "text": "I look for chances to share my faith.",
+        "gift": "Evangelism"
+      },
+      {
+        "id": 21,
+        "text": "I enjoy organizing information into systems.",
+        "gift": "Administration"
+      },
+      {
+        "id": 22,
+        "text": "I like developing ministries from the ground up.",
+        "gift": "Apostleship"
+      },
+      {
+        "id": 23,
+        "text": "I often motivate people to take steps of faith.",
+        "gift": "Exhortation"
+      },
+      {
+        "id": 24,
+        "text": "I enjoy contributing financially to ministry work.",
+        "gift": "Giving"
+      },
+      {
+        "id": 25,
+        "text": "I like studying Scripture deeply.",
+        "gift": "Knowledge"
+      },
+      {
+        "id": 26,
+        "text": "I enjoy practical hands-on help.",
+        "gift": "Service"
+      },
+      {
+        "id": 27,
+        "text": "I have compassion for those who suffer.",
+        "gift": "Mercy"
+      },
+      {
+        "id": 28,
+        "text": "I enjoy teaching groups or individuals.",
+        "gift": "Teaching"
+      },
+      {
+        "id": 29,
+        "text": "I like helping others become spiritually mature.",
+        "gift": "Pastor/Shepherd"
+      },
+      {
+        "id": 30,
+        "text": "I am comfortable describing the gospel to others.",
+        "gift": "Evangelism"
+      },
+      {
+        "id": 31,
+        "text": "I enjoy creating order in complex situations.",
+        "gift": "Administration"
+      },
+      {
+        "id": 32,
+        "text": "I feel drawn to missionary or outreach work.",
+        "gift": "Apostleship"
+      },
+      {
+        "id": 33,
+        "text": "I am good at giving personal advice.",
+        "gift": "Exhortation"
+      },
+      {
+        "id": 34,
+        "text": "I like giving to ministries anonymously.",
+        "gift": "Giving"
+      },
+      {
+        "id": 35,
+        "text": "I often find insights when reading Scripture.",
+        "gift": "Knowledge"
+      },
+      {
+        "id": 36,
+        "text": "I enjoy serving others in practical ways.",
+        "gift": "Service"
+      },
+      {
+        "id": 37,
+        "text": "I sense when others are discouraged or hurting.",
+        "gift": "Mercy"
+      },
+      {
+        "id": 38,
+        "text": "I enjoy preparing lessons from the Bible.",
+        "gift": "Teaching"
+      },
+      {
+        "id": 39,
+        "text": "I enjoy mentoring people spiritually.",
+        "gift": "Pastor/Shepherd"
+      },
+      {
+        "id": 40,
+        "text": "I find it natural to talk to non-believers.",
+        "gift": "Evangelism"
+      },
+      {
+        "id": 41,
+        "text": "I enjoy creating plans for others to follow.",
+        "gift": "Administration"
+      },
+      {
+        "id": 42,
+        "text": "I like helping new ministries get established.",
+        "gift": "Apostleship"
+      },
+      {
+        "id": 43,
+        "text": "People say I am encouraging to be around.",
+        "gift": "Exhortation"
+      },
+      {
+        "id": 44,
+        "text": "I often give generously without being asked.",
+        "gift": "Giving"
+      },
+      {
+        "id": 45,
+        "text": "I enjoy explaining Scripture to others.",
+        "gift": "Knowledge"
+      },
+      {
+        "id": 46,
+        "text": "I like taking care of behind-the-scenes tasks.",
+        "gift": "Service"
+      },
+      {
+        "id": 47,
+        "text": "I feel drawn to help people in emotional pain.",
+        "gift": "Mercy"
+      },
+      {
+        "id": 48,
+        "text": "I enjoy organizing Bible lessons.",
+        "gift": "Teaching"
+      },
+      {
+        "id": 49,
+        "text": "I like offering guidance to people seeking direction.",
+        "gift": "Pastor/Shepherd"
+      },
+      {
+        "id": 50,
+        "text": "I enjoy sharing personal stories about faith.",
+        "gift": "Evangelism"
+      },
+      {
+        "id": 51,
+        "text": "I enjoy overseeing projects or ministries.",
+        "gift": "Administration"
+      },
+      {
+        "id": 52,
+        "text": "I am energized by developing new ministry ideas.",
+        "gift": "Apostleship"
+      },
+      {
+        "id": 53,
+        "text": "People often come to me for encouragement.",
+        "gift": "Exhortation"
+      },
+      {
+        "id": 54,
+        "text": "I enjoy giving sacrificially.",
+        "gift": "Giving"
+      },
+      {
+        "id": 55,
+        "text": "I like studying biblical topics in depth.",
+        "gift": "Knowledge"
+      },
+      {
+        "id": 56,
+        "text": "I enjoy helping others succeed.",
+        "gift": "Service"
+      },
+      {
+        "id": 57,
+        "text": "I feel a strong desire to care for hurting people.",
+        "gift": "Mercy"
+      },
+      {
+        "id": 58,
+        "text": "I find satisfaction in teaching Scripture.",
+        "gift": "Teaching"
+      },
+      {
+        "id": 59,
+        "text": "I enjoy caring for others spiritually.",
+        "gift": "Pastor/Shepherd"
+      },
+      {
+        "id": 60,
+        "text": "I often talk about my faith naturally.",
+        "gift": "Evangelism"
+      },
+      {
+        "id": 61,
+        "text": "I enjoy helping organizations run smoothly.",
+        "gift": "Administration"
+      },
+      {
+        "id": 62,
+        "text": "I feel called to help expand ministry work.",
+        "gift": "Apostleship"
+      },
+      {
+        "id": 63,
+        "text": "People say my words motivate them.",
+        "gift": "Exhortation"
+      },
+      {
+        "id": 64,
+        "text": "I enjoy giving to meet practical needs.",
+        "gift": "Giving"
+      },
+      {
+        "id": 65,
+        "text": "I like connecting biblical principles together.",
+        "gift": "Knowledge"
+      },
+      {
+        "id": 66,
+        "text": "I like filling practical needs others overlook.",
+        "gift": "Service"
+      },
+      {
+        "id": 67,
+        "text": "I easily notice when someone is discouraged.",
+        "gift": "Mercy"
+      },
+      {
+        "id": 68,
+        "text": "I enjoy organizing teaching materials.",
+        "gift": "Teaching"
+      },
+      {
+        "id": 69,
+        "text": "I feel responsible for helping people grow spiritually.",
+        "gift": "Pastor/Shepherd"
+      },
+      {
+        "id": 70,
+        "text": "I happily share my beliefs with others.",
+        "gift": "Evangelism"
+      },
+      {
+        "id": 71,
+        "text": "I enjoy managing people or systems.",
+        "gift": "Administration"
+      },
+      {
+        "id": 72,
+        "text": "I enjoy pioneering or trailblazing new ministry areas.",
+        "gift": "Apostleship"
+      },
+      {
+        "id": 73,
+        "text": "I like giving spiritual encouragement.",
+        "gift": "Exhortation"
+      },
+      {
+        "id": 74,
+        "text": "I enjoy using money or resources to bless others.",
+        "gift": "Giving"
+      },
+      {
+        "id": 75,
+        "text": "I like understanding how Scripture applies to life.",
+        "gift": "Knowledge"
+      },
+      {
+        "id": 76,
+        "text": "I enjoy assisting others without being recognized.",
+        "gift": "Service"
+      },
+      {
+        "id": 77,
+        "text": "I easily empathize with others' emotional struggles.",
+        "gift": "Mercy"
+      },
+      {
+        "id": 78,
+        "text": "I enjoy sharing biblical truth with clarity.",
+        "gift": "Teaching"
+      },
+      {
+        "id": 79,
+        "text": "I enjoy being spiritually responsible for others.",
+        "gift": "Pastor/Shepherd"
+      },
+      {
+        "id": 80,
+        "text": "I often initiate conversations about faith.",
+        "gift": "Evangelism"
+      }
+    ]
+  }
+}
