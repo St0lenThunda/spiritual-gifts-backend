@@ -4,7 +4,7 @@ Authentication utilities using Neon Auth for magic links and JWT for session man
 import httpx
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -24,8 +24,8 @@ SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = settings.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.JWT_EXPIRATION_MINUTES
 
-# HTTP Bearer token scheme
-security = HTTPBearer()
+# HTTP Bearer token scheme (don't auto-error so we can check cookies)
+security = HTTPBearer(auto_error=False)
 
 class NeonUser(BaseModel):
     """Neon user model."""
@@ -85,13 +85,15 @@ def verify_token(token: str) -> dict:
 # ============================================================================
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ) -> User:
     """
-    Get the current authenticated user from JWT token.
+    Get the current authenticated user from JWT token (header or cookie).
     
     Args:
+        request: FastAPI request object
         credentials: HTTP Bearer credentials from request header
         db: Database session
         
@@ -101,10 +103,21 @@ async def get_current_user(
     Raises:
         HTTPException: If authentication fails
     """
-    token = credentials.credentials
+    token = None
+    if credentials:
+        token = credentials.credentials
+    else:
+        token = request.cookies.get("access_token")
+        
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     payload = verify_token(token)
     
-    # sub is stored as string, convert to int for DB query
     user_id_str = payload.get("sub")
     if user_id_str is None:
         raise HTTPException(

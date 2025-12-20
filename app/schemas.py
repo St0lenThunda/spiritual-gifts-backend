@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from typing import Optional, Dict, Annotated
 from datetime import datetime
 
 # Authentication schemas
@@ -29,9 +29,19 @@ class UserResponse(BaseModel):
 # Survey schemas
 class SurveyCreate(BaseModel):
     """Schema for creating a new survey (authenticated users only)."""
-    answers: Dict[int, int]
+    answers: Dict[int, Annotated[int, Field(ge=1, le=5)]]
     notes: Optional[str] = None
     scores: Optional[Dict[str, float]] = None
+
+    @field_validator("answers")
+    @classmethod
+    def validate_answers(cls, v: Dict[int, int]) -> Dict[int, int]:
+        if not v:
+            raise ValueError("Answers cannot be empty")
+        for key, value in v.items():
+            if not (1 <= value <= 5):
+                raise ValueError(f"Score for question {key} must be between 1 and 5")
+        return v
 
 class SurveyResponse(BaseModel):
     """Schema for survey responses."""

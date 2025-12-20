@@ -1,16 +1,24 @@
 """
 API routers for the Spiritual Gifts Assessment application.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
 
-from .neon_auth import neon_send_magic_link, neon_verify_magic_link, get_current_user, create_access_token
+from .neon_auth import (
+    neon_send_magic_link, 
+    neon_verify_magic_link, 
+    get_current_user, 
+    create_access_token,
+    ACCESS_TOKEN_EXPIRE_MINUTES
+)
 from .database import get_db
 from .models import Survey, User
 from . import schemas
 from .services.getJSONData import load_questions, load_gifts, load_scriptures
+from .limiter import limiter
+from .config import settings
 
 router = APIRouter()
 
@@ -19,29 +27,37 @@ router = APIRouter()
 # ============================================================================
 
 @router.post("/auth/send-link")
-async def send_magic_link(request: schemas.LoginRequest):
+@limiter.limit("3/10minutes")
+async def send_magic_link(request: Request, login_data: schemas.LoginRequest):
     """
     Send a magic link to the user's email for passwordless authentication.
     
     Args:
-        request: LoginRequest with email
+        request: FastAPI request object (required by slowapi)
+        login_data: LoginRequest with email
         
     Returns:
         Success message
     """
     try:
-        await neon_send_magic_link(request.email)
-        return {"message": "Magic link sent successfully", "email": request.email}
+        await neon_send_magic_link(login_data.email)
+        return {"message": "Magic link sent successfully", "email": login_data.email}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send magic link: {str(e)}")
 
 @router.post("/auth/verify", response_model=schemas.Token)
-async def verify_magic_link(request: schemas.TokenVerifyRequest, db: Session = Depends(get_db)):
+async def verify_magic_link(
+    request: schemas.TokenVerifyRequest, 
+    response: Response,
+    fastapi_request: Request,
+    db: Session = Depends(get_db)
+):
     """
     Verify the magic link token and return a JWT access token.
     
     Args:
         request: TokenVerifyRequest with magic link token
+        response: FastAPI response object
         db: Database session
         
     Returns:
@@ -52,8 +68,6 @@ async def verify_magic_link(request: schemas.TokenVerifyRequest, db: Session = D
         neon_response = await neon_verify_magic_link(request.token)
         
         # Extract user info from Neon response
-        # Note: The actual structure depends on Neon Auth response format
-        # Adjust these fields based on actual Neon Auth response
         user_email = neon_response.get("user", {}).get("email") or neon_response.get("email")
         
         if not user_email:
@@ -74,6 +88,16 @@ async def verify_magic_link(request: schemas.TokenVerifyRequest, db: Session = D
         # Create JWT token (sub must be string for jose library)
         access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
         
+        # Set HttpOnly cookie
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=fastapi_request.url.scheme == "https",
+            samesite="lax",
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+        
         return {"access_token": access_token, "token_type": "bearer"}
         
     except HTTPException:
@@ -82,23 +106,47 @@ async def verify_magic_link(request: schemas.TokenVerifyRequest, db: Session = D
         raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
 
 @router.post("/auth/dev-login", response_model=schemas.Token)
-async def dev_login_endpoint(request: schemas.LoginRequest, db: Session = Depends(get_db)):
+async def dev_login_endpoint(
+    request: schemas.LoginRequest, 
+    response: Response,
+    fastapi_request: Request,
+    db: Session = Depends(get_db)
+):
     """
     Development login endpoint - bypasses magic link email for testing.
     Simply provide an email and you'll get a JWT token.
     
-    IMPORTANT: This endpoint should be disabled in production!
+    IMPORTANT: This endpoint is strictly disabled in production!
     
     Args:
         request: LoginRequest with email
+        response: FastAPI response object
+        fastapi_request: Request object
         db: Database session
         
     Returns:
         JWT access token
     """
+    if settings.ENV == "production":
+        raise HTTPException(
+            status_code=403, 
+            detail="Dev login is strictly prohibited in production environments."
+        )
+    
     try:
         from .dev_auth import dev_login
         result = await dev_login(request.email, "dev-password", db)
+        
+        # Set HttpOnly cookie
+        response.set_cookie(
+            key="access_token",
+            value=result["access_token"],
+            httponly=True,
+            secure=fastapi_request.url.scheme == "https",
+            samesite="lax",
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+        
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Dev login failed: {str(e)}")
