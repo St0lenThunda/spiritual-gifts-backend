@@ -22,7 +22,9 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 origins = [
     "http://localhost:5173",
+    "http://localhost:5174",
     "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
     "https://sga-v1.netlify.app",
     "https://spiritual-gifts-backend-d82f.onrender.com"
 ]
