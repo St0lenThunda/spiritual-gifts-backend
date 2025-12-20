@@ -10,7 +10,7 @@ from .neon_auth import neon_send_magic_link, neon_verify_magic_link, get_current
 from .database import get_db
 from .models import Survey, User
 from . import schemas
-from .services.getJSONData import load_questions, load_gifts
+from .services.getJSONData import load_questions, load_gifts, load_scriptures
 
 router = APIRouter()
 
@@ -201,3 +201,13 @@ def get_gifts():
         Spiritual gifts data
     """
     return load_gifts()
+
+@router.get("/scriptures")
+def get_scriptures():
+    """
+    Get scripture references.
+    
+    Returns:
+        Scriptures data
+    """
+    return load_scriptures()
