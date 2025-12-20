@@ -16,7 +16,7 @@ from .neon_auth import (
 from .database import get_db
 from .models import Survey, User
 from . import schemas
-from .services.getJSONData import load_questions, load_gifts, load_scriptures
+from .services import AuthService, SurveyService, load_questions, load_gifts, load_scriptures
 from .limiter import limiter
 from .config import settings
 
@@ -73,17 +73,11 @@ async def verify_magic_link(
         if not user_email:
             raise HTTPException(status_code=400, detail="Invalid token response from Neon Auth")
         
-        # Find or create user in our database
-        user = db.query(User).filter(User.email == user_email).first()
-        if not user:
-            user = User(email=user_email, created_at=datetime.utcnow())
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+        # Find or create user in our database (via service layer)
+        user = AuthService.get_or_create_user(db, user_email)
         
         # Update last login
-        user.last_login = datetime.utcnow()
-        db.commit()
+        AuthService.update_last_login(db, user)
         
         # Create JWT token (sub must be string for jose library)
         access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
@@ -186,15 +180,12 @@ def submit_survey(
         Created survey object
     """
     try:
-        survey = Survey(
-            user_id=current_user.id,
-            neon_user_id=current_user.email,  # Keep for backward compatibility
+        survey = SurveyService.create_survey(
+            db=db,
+            user=current_user,
             answers=survey_data.answers,
-            scores=survey_data.scores or {},
+            scores=survey_data.scores
         )
-        db.add(survey)
-        db.commit()
-        db.refresh(survey)
         return survey
     except Exception as e:
         import traceback
@@ -218,7 +209,7 @@ def list_user_surveys(
         List of user's surveys
     """
     try:
-        surveys = db.query(Survey).filter(Survey.user_id == current_user.id).order_by(Survey.created_at.desc()).all()
+        surveys = SurveyService.get_user_surveys(db, current_user)
         return surveys
     except Exception as e:
         import traceback
