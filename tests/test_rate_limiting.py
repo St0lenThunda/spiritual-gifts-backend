@@ -1,36 +1,4 @@
-import os
-
-# Set dummy environment variables for settings initialization
-os.environ["DATABASE_URL"] = "postgresql://user:pass@localhost/db"
-os.environ["NEON_API_KEY"] = "dummy"
-os.environ["NEON_PROJECT_ID"] = "dummy"
-
-import pytest
-from fastapi.testclient import TestClient
-
-import app.database
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-
-# Test database setup
-SQLALCHEMY_DATABASE_URL = "sqlite://"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-app.database.engine = engine
-app.database.SessionLocal = TestingSessionLocal
-
-from app.main import app
-
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
+# Using fixtures from conftest.py
 
 def test_rate_limiting_send_link(client):
     """Test that /auth/send-link is rate limited."""

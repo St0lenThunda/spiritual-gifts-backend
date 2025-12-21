@@ -1,61 +1,18 @@
-import os
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-
-# Set dummy environment variables for settings initialization
-os.environ["DATABASE_URL"] = "postgresql://user:pass@localhost/db"
-os.environ["NEON_API_KEY"] = "dummy"
-os.environ["NEON_PROJECT_ID"] = "dummy"
-
-import app.database
-from app.config import settings
-
-# Test database setup
-SQLALCHEMY_DATABASE_URL = "sqlite://"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-app.database.engine = engine
-app.database.SessionLocal = TestingSessionLocal
-
-from app.main import app
-
-from app.database import Base, get_db
+# Using fixtures from conftest.py
 from app.neon_auth import get_current_user
 from app.models import User
-
-def override_get_current_user():
-    return User(id=1, email="test@example.com")
-
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-app.dependency_overrides[get_db] = override_get_db
-app.dependency_overrides[get_current_user] = override_get_current_user
-
-from app.database import Base
+from datetime import datetime
 
 @pytest.fixture(autouse=True)
-def setup_db():
-    Base.metadata.create_all(bind=engine)
+def override_user(client):
+    """Specific override for this test file."""
+    def _override():
+        return User(id=1, email="test@example.com", created_at=datetime.utcnow())
+    from app.main import app
+    app.dependency_overrides[get_current_user] = _override
     yield
-    Base.metadata.drop_all(bind=engine)
-
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
+    # conftest.py handles clearing overrides
 
 def test_survey_validation_valid(client):
     """Test that valid survey data is accepted."""
