@@ -84,7 +84,7 @@ async def verify_magic_link(
     AuthService.update_last_login(db, user)
     
     # Create JWT token (sub must be string for jose library)
-    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email, "role": user.role})
     
     # Set HttpOnly cookie
     response.set_cookie(
@@ -155,6 +155,8 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     Returns:
         User information
     """
+    print(f"DEBUG: Backend sending for {current_user.email}: role={current_user.role}")
+    logger.info("fetch_user_info", user_id=current_user.id, user_email=current_user.email, user_role=current_user.role)
     return current_user
 
 @router.post("/auth/logout")

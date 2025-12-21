@@ -50,6 +50,6 @@ async def dev_login(email: str, password: str, db: Session) -> dict:
     db.commit()
     
     # Create JWT token (sub must be string for jose library)
-    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email, "role": user.role})
     
     return {"access_token": access_token, "token_type": "bearer"}
