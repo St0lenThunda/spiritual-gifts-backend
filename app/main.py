@@ -20,6 +20,12 @@ async def lifespan(app: FastAPI):
     # In production, use Alembic migrations: `alembic upgrade head`
     if settings.ENV == "development":
         Base.metadata.create_all(bind=engine)
+    
+    # Debug: List all registered routes
+    print("RECOLLECTING ROUTES:")
+    for route in app.routes:
+        print(f"ROUTE: {getattr(route, 'path', 'N/A')} [{getattr(route, 'methods', 'N/A')}]")
+        
     yield
 
 # Initialize structured logging

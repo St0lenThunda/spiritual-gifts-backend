@@ -136,3 +136,23 @@ def test_admin_routes_unauthorized(client):
     for route in routes:
         response = client.get(route)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_get_schema_as_admin(client, admin_token):
+    response = client.get(
+        "/api/v1/admin/schema",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "mermaid" in data
+    assert "erDiagram" in data["mermaid"]
+    assert "users" in data["mermaid"]
+    assert "surveys" in data["mermaid"]
+    assert "log_entries" in data["mermaid"]
+
+def test_schema_route_forbidden_for_regular_user(client, user_token):
+    response = client.get(
+        "/api/v1/admin/schema",
+        headers={"Authorization": f"Bearer {user_token}"}
+    )
+    assert response.status_code == status.HTTP_403_FORBIDDEN
