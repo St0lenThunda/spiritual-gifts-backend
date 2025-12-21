@@ -66,10 +66,16 @@ async def verify_magic_link(
     neon_response = await neon_verify_magic_link(request.token)
     
     # Extract user info from Neon response
-    user_email = neon_response.get("user", {}).get("email") or neon_response.get("email")
+    user_data = neon_response.get("user")
+    if not user_data:
+        # Fallback to top-level email if user object is missing
+        user_email = neon_response.get("email")
+    else:
+        user_email = user_data.get("email")
     
     if not user_email:
-        raise HTTPException(status_code=400, detail="Invalid token response from Neon Auth")
+        logger.error("magic_link_verification_failed", reason="missing_email_in_response", response=neon_response)
+        raise HTTPException(status_code=400, detail="Invalid token response from Neon Auth: Email missing")
     
     # Find or create user in our database (via service layer)
     user = AuthService.get_or_create_user(db, user_email)

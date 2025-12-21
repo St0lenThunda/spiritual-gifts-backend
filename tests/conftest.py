@@ -72,3 +72,13 @@ def client(db):
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as c:
         yield c
+
+@pytest.fixture
+def test_user(db):
+    """Create a test user in the database."""
+    from app.models import User
+    user = User(email="test@example.com")
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
