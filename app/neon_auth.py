@@ -2,6 +2,7 @@
 Authentication utilities using Neon Auth for magic links and JWT for session management.
 """
 import httpx
+import structlog
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import Depends, HTTPException, status, Request
@@ -13,6 +14,7 @@ from pydantic import BaseModel
 from .config import settings
 from .database import get_db
 from .models import User
+from .logging_setup import user_id_ctx, user_email_ctx
 
 # Neon Auth configuration
 NEON_AUTH_URL = "https://auth.neon.tech"
@@ -142,6 +144,11 @@ async def get_current_user(
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Set context for logging
+    structlog.contextvars.bind_contextvars(user_id=user.id, user_email=user.email)
+    user_id_ctx.set(user.id)
+    user_email_ctx.set(user.email)
     
     return user
 

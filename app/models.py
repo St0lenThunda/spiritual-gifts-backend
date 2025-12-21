@@ -28,3 +28,26 @@ class Survey(Base):
     
     # Relationship to user
     user = relationship("User", back_populates="surveys")
+
+class LogEntry(Base):
+    """Model for storing application logs and errors in the database."""
+    __tablename__ = "log_entries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    level = Column(String, index=True)
+    event = Column(String, index=True)
+    
+    # Contextual info
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user_email = Column(String, index=True, nullable=True)
+    path = Column(String, index=True)
+    method = Column(String)
+    status_code = Column(Integer, nullable=True)
+    
+    # Detailed data
+    context = Column(JSON, nullable=True)
+    exception = Column(String, nullable=True)
+    
+    # Relationship to user
+    user = relationship("User")

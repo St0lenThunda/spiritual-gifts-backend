@@ -19,6 +19,7 @@ from . import schemas
 from .services import AuthService, SurveyService, load_questions, load_gifts, load_scriptures
 from .limiter import limiter
 from .config import settings
+from .logging_setup import logger
 
 router = APIRouter()
 
@@ -41,8 +42,10 @@ async def send_magic_link(request: Request, login_data: schemas.LoginRequest):
     """
     try:
         await neon_send_magic_link(login_data.email)
+        logger.info("magic_link_sent", user_email=login_data.email)
         return {"message": "Magic link sent successfully", "email": login_data.email}
     except Exception as e:
+        logger.error("magic_link_send_failed", user_email=login_data.email, error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to send magic link: {str(e)}")
 
 @router.post("/auth/verify", response_model=schemas.Token)
@@ -91,6 +94,8 @@ async def verify_magic_link(
             samesite="lax",
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
+        
+        logger.info("magic_link_verified", user_id=user.id, user_email=user.email)
         
         return {"access_token": access_token, "token_type": "bearer"}
         
@@ -141,6 +146,7 @@ async def dev_login_endpoint(
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
         
+        logger.info("dev_login_successful", user_email=request.email)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Dev login failed: {str(e)}")
@@ -157,6 +163,31 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         User information
     """
     return current_user
+
+@router.post("/auth/logout")
+async def logout(
+    request: Request, 
+    response: Response,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Logout the current user by clearing the access token cookie.
+    
+    Args:
+        request: FastAPI request object
+        response: FastAPI response object
+        
+    Returns:
+        Success message
+    """
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=request.url.scheme == "https",
+        samesite="lax",
+    )
+    logger.info("user_logged_out")
+    return {"message": "Successfully logged out"}
 
 # ============================================================================
 # Survey Routes (Protected)
@@ -186,6 +217,7 @@ def submit_survey(
             answers=survey_data.answers,
             scores=survey_data.scores
         )
+        logger.info("survey_submitted", survey_id=survey.id)
         return survey
     except Exception as e:
         import traceback
