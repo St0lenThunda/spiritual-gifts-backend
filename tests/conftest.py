@@ -37,8 +37,13 @@ def setup_db():
 
 @pytest.fixture(autouse=True)
 def clear_overrides():
-    """Clear dependency overrides before and after each test."""
+    """Clear dependency overrides and reset limiter before and after each test."""
     app.dependency_overrides.clear()
+    # Reset limiter to avoid cross-test interference
+    from app.limiter import limiter
+    limiter.reset()
+    if hasattr(app.state, "limiter"):
+        app.state.limiter.enabled = True
     yield
     app.dependency_overrides.clear()
 

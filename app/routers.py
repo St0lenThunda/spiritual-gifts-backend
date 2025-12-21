@@ -40,13 +40,9 @@ async def send_magic_link(request: Request, login_data: schemas.LoginRequest):
     Returns:
         Success message
     """
-    try:
-        await neon_send_magic_link(login_data.email)
-        logger.info("magic_link_sent", user_email=login_data.email)
-        return {"message": "Magic link sent successfully", "email": login_data.email}
-    except Exception as e:
-        logger.error("magic_link_send_failed", user_email=login_data.email, error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to send magic link: {str(e)}")
+    await neon_send_magic_link(login_data.email)
+    logger.info("magic_link_sent", user_email=login_data.email)
+    return {"message": "Magic link sent successfully", "email": login_data.email}
 
 @router.post("/auth/verify", response_model=schemas.Token)
 async def verify_magic_link(
@@ -66,43 +62,37 @@ async def verify_magic_link(
     Returns:
         JWT access token
     """
-    try:
-        # Verify the magic link with Neon Auth
-        neon_response = await neon_verify_magic_link(request.token)
-        
-        # Extract user info from Neon response
-        user_email = neon_response.get("user", {}).get("email") or neon_response.get("email")
-        
-        if not user_email:
-            raise HTTPException(status_code=400, detail="Invalid token response from Neon Auth")
-        
-        # Find or create user in our database (via service layer)
-        user = AuthService.get_or_create_user(db, user_email)
-        
-        # Update last login
-        AuthService.update_last_login(db, user)
-        
-        # Create JWT token (sub must be string for jose library)
-        access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
-        
-        # Set HttpOnly cookie
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=fastapi_request.url.scheme == "https",
-            samesite="lax",
-            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
-        )
-        
-        logger.info("magic_link_verified", user_id=user.id, user_email=user.email)
-        
-        return {"access_token": access_token, "token_type": "bearer"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
+    # Verify the magic link with Neon Auth
+    neon_response = await neon_verify_magic_link(request.token)
+    
+    # Extract user info from Neon response
+    user_email = neon_response.get("user", {}).get("email") or neon_response.get("email")
+    
+    if not user_email:
+        raise HTTPException(status_code=400, detail="Invalid token response from Neon Auth")
+    
+    # Find or create user in our database (via service layer)
+    user = AuthService.get_or_create_user(db, user_email)
+    
+    # Update last login
+    AuthService.update_last_login(db, user)
+    
+    # Create JWT token (sub must be string for jose library)
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    
+    # Set HttpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=fastapi_request.url.scheme == "https",
+        samesite="lax",
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    
+    logger.info("magic_link_verified", user_id=user.id, user_email=user.email)
+    
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/auth/dev-login", response_model=schemas.Token)
 async def dev_login_endpoint(
@@ -132,24 +122,21 @@ async def dev_login_endpoint(
             detail="Dev login is strictly prohibited in production environments."
         )
     
-    try:
-        from .dev_auth import dev_login
-        result = await dev_login(request.email, "dev-password", db)
-        
-        # Set HttpOnly cookie
-        response.set_cookie(
-            key="access_token",
-            value=result["access_token"],
-            httponly=True,
-            secure=fastapi_request.url.scheme == "https",
-            samesite="lax",
-            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
-        )
-        
-        logger.info("dev_login_successful", user_email=request.email)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Dev login failed: {str(e)}")
+    from .dev_auth import dev_login
+    result = await dev_login(request.email, "dev-password", db)
+    
+    # Set HttpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=result["access_token"],
+        httponly=True,
+        secure=fastapi_request.url.scheme == "https",
+        samesite="lax",
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    
+    logger.info("dev_login_successful", user_email=request.email)
+    return result
 
 @router.get("/auth/me", response_model=schemas.UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
@@ -210,20 +197,14 @@ def submit_survey(
     Returns:
         Created survey object
     """
-    try:
-        survey = SurveyService.create_survey(
-            db=db,
-            user=current_user,
-            answers=survey_data.answers,
-            scores=survey_data.scores
-        )
-        logger.info("survey_submitted", survey_id=survey.id)
-        return survey
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"Error submitting survey: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    survey = SurveyService.create_survey(
+        db=db,
+        user=current_user,
+        answers=survey_data.answers,
+        scores=survey_data.scores
+    )
+    logger.info("survey_submitted", survey_id=survey.id)
+    return survey
 
 @router.get("/user/surveys", response_model=List[schemas.SurveyResponse])
 def list_user_surveys(
@@ -240,14 +221,8 @@ def list_user_surveys(
     Returns:
         List of user's surveys
     """
-    try:
-        surveys = SurveyService.get_user_surveys(db, current_user)
-        return surveys
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"Error fetching surveys: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    surveys = SurveyService.get_user_surveys(db, current_user)
+    return surveys
 
 # ============================================================================
 # Public Routes
