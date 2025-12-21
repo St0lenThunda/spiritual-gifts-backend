@@ -46,15 +46,48 @@ def test_logout_logging_with_context(client):
     finally:
         db.close()
 
-def test_error_logging(client):
-    """Test that unhandled exceptions are logged."""
-    # Trigger a 404 (not an exception, but recorded in request logs)
-    client.get("/some-non-existent-route")
+def test_request_id_correlation(client):
+    """Test that X-Request-ID header is captured in logs."""
+    request_id = "test-correlation-id-123"
+    client.get("/health", headers={"X-Request-ID": request_id})
     
     db = SessionLocal()
     try:
-        log = db.query(LogEntry).filter(LogEntry.path == "/some-non-existent-route").first()
+        log = db.query(LogEntry).filter(LogEntry.request_id == request_id).first()
         assert log is not None
-        assert log.status_code == 404
+        assert log.path == "/health"
+        assert log.request_id == request_id
+    finally:
+        db.close()
+def test_unauthorized_access_logging(client):
+    """Test that unauthorized access attempts are logged."""
+    # Try to access a protected route without a token
+    client.get("/auth/me")
+    
+    db = SessionLocal()
+    try:
+        log = db.query(LogEntry).filter(LogEntry.event == "unauthorized_access").first()
+        assert log is not None
+        assert log.context.get("reason") == "missing_token"
+        assert log.path == "/auth/me"
+    finally:
+        db.close()
+
+def test_rate_limit_logging(client):
+    """Test that rate limit breaks are logged."""
+    # The limit is 3/10min for /auth/send-link
+    for _ in range(3):
+        client.post("/auth/send-link", json={"email": "rate@test.com"})
+    
+    # This 4th one should trigger rate limit
+    response = client.post("/auth/send-link", json={"email": "rate@test.com"})
+    assert response.status_code == 429
+    
+    db = SessionLocal()
+    try:
+        log = db.query(LogEntry).filter(LogEntry.event == "rate_limit_exceeded").first()
+        assert log is not None
+        assert log.path == "/auth/send-link"
+        assert "limit" in log.context
     finally:
         db.close()

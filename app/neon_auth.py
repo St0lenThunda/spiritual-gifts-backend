@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from .config import settings
 from .database import get_db
 from .models import User
-from .logging_setup import user_id_ctx, user_email_ctx
+from .logging_setup import user_id_ctx, user_email_ctx, logger
 
 # Neon Auth configuration
 NEON_AUTH_URL = "https://auth.neon.tech"
@@ -76,6 +76,7 @@ def verify_token(token: str) -> dict:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except JWTError:
+        logger.warning("unauthorized_access", reason="invalid_token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -112,6 +113,7 @@ async def get_current_user(
         token = request.cookies.get("access_token")
         
     if not token:
+        logger.info("unauthorized_access", reason="missing_token", path=request.url.path)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
@@ -139,6 +141,7 @@ async def get_current_user(
     
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
+        logger.warning("unauthorized_access", reason="user_not_found", user_id=user_id)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",

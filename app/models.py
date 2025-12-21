@@ -44,6 +44,7 @@ class LogEntry(Base):
     path = Column(String, index=True)
     method = Column(String)
     status_code = Column(Integer, nullable=True)
+    request_id = Column(String, index=True, nullable=True)
     
     # Detailed data
     context = Column(JSON, nullable=True)

@@ -12,6 +12,7 @@ user_id_ctx: ContextVar[int] = ContextVar("user_id", default=None)
 user_email_ctx: ContextVar[str] = ContextVar("user_email", default=None)
 path_ctx: ContextVar[str] = ContextVar("path", default=None)
 method_ctx: ContextVar[str] = ContextVar("method", default=None)
+request_id_ctx: ContextVar[str] = ContextVar("request_id", default=None)
 
 def db_logger_processor(logger: Any, method_name: str, event_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -34,8 +35,9 @@ def db_logger_processor(logger: Any, method_name: str, event_dict: Dict[str, Any
             path=path_ctx.get(),
             method=method_ctx.get(),
             status_code=event_dict.get("status_code"),
+            request_id=event_dict.get("request_id") or request_id_ctx.get(),
             exception=event_dict.get("exception"),
-            context={k: v for k, v in event_dict.items() if k not in ["event", "status_code", "exception", "user_id", "user_email"]}
+            context={k: v for k, v in event_dict.items() if k not in ["event", "status_code", "exception", "user_id", "user_email", "request_id"]}
         )
         db.add(log_entry)
         db.commit()

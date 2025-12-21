@@ -5,9 +5,10 @@ from .database import Base, engine
 from .routers import router
 from .limiter import limiter
 from .config import settings
-from .logging_setup import setup_logging, logger, path_ctx, method_ctx, user_id_ctx, user_email_ctx
+from .logging_setup import setup_logging, logger, path_ctx, method_ctx, user_id_ctx, user_email_ctx, request_id_ctx
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from fastapi import Request, Response
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,6 +32,16 @@ async def logging_middleware(request, call_next):
     """
     path_ctx.set(request.url.path)
     method_ctx.set(request.method)
+    
+    # Handle Correlation ID
+    import uuid
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    request_id_ctx.set(request_id)
+    
+    # Set ID for structlog in all subsequent logs for this request
+    import structlog
+    structlog.contextvars.bind_contextvars(request_id=request_id)
+    
     # user_id and user_email are set in the auth dependency (neon_auth.py)
     
     import time
@@ -60,7 +71,20 @@ async def logging_middleware(request, call_next):
             status_code=500
         )
         raise
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+@app.exception_handler(RateLimitExceeded)
+async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    """
+    Log rate limit breaches before returning the 429 response.
+    """
+    logger.warning(
+        "rate_limit_exceeded",
+        client_ip=request.client.host if request.client else "unknown",
+        path=request.url.path,
+        limit=str(exc.detail)
+    )
+    return _rate_limit_exceeded_handler(request, exc)
+
+# app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 origins = [
     "http://localhost:5173",
     "http://localhost:5174",
