@@ -6,20 +6,20 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
 
-from .neon_auth import (
+from ..neon_auth import (
     neon_send_magic_link, 
     neon_verify_magic_link, 
     get_current_user, 
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
-from .database import get_db
-from .models import Survey, User
-from . import schemas
-from .services import AuthService, SurveyService, load_questions, load_gifts, load_scriptures
-from .limiter import limiter
-from .config import settings
-from .logging_setup import logger
+from ..database import get_db
+from ..models import Survey, User
+from .. import schemas
+from ..services import AuthService, SurveyService, load_questions, load_gifts, load_scriptures
+from ..limiter import limiter
+from ..config import settings
+from ..logging_setup import logger
 
 router = APIRouter()
 
@@ -128,7 +128,7 @@ async def dev_login_endpoint(
             detail="Dev login is strictly prohibited in production environments."
         )
     
-    from .dev_auth import dev_login
+    from ..dev_auth import dev_login
     result = await dev_login(request.email, "dev-password", db)
     
     # Set HttpOnly cookie

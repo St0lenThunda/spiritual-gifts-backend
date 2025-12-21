@@ -28,6 +28,7 @@ class UserResponse(BaseModel):
     """User response schema."""
     id: int = Field(..., description="Unique internal user ID")
     email: str = Field(..., description="User's verified email address")
+    role: str = Field("user", description="User's role (user or admin)")
     created_at: datetime = Field(..., description="Timestamp of user account creation")
     last_login: Optional[datetime] = Field(None, description="Timestamp of the most recent successful login")
 

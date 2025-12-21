@@ -155,6 +155,29 @@ async def get_current_user(
     
     return user
 
+async def get_current_admin(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Dependency that verifies if the current user is an administrator.
+    
+    Args:
+        current_user: Current authenticated user
+        
+    Returns:
+        User object if the user is an admin
+        
+    Raises:
+        HTTPException: If the user is not an admin
+    """
+    if current_user.role != "admin":
+        logger.warning("unauthorized_admin_access", user_id=current_user.id, user_email=current_user.email)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrative privileges required"
+        )
+    return current_user
+
 # ============================================================================
 # Neon Auth Magic Link Functions
 # ============================================================================

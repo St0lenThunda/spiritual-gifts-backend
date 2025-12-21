@@ -27,7 +27,8 @@ class AuthService:
         """
         user = db.query(User).filter(User.email == email).first()
         if not user:
-            user = User(email=email, created_at=datetime.utcnow())
+            role = "admin" if email == "tonym415@gmail.com" else "user"
+            user = User(email=email, role=role, created_at=datetime.utcnow())
             db.add(user)
             db.commit()
             db.refresh(user)

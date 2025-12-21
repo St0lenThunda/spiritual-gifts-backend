@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from .database import Base, engine
 from .routers import router
 from .limiter import limiter
+from .routers import admin
+from .services import load_questions, load_gifts
 from .config import settings
 from .logging_setup import setup_logging, logger, path_ctx, method_ctx, user_id_ctx, user_email_ctx, request_id_ctx
 from slowapi import _rate_limit_exceeded_handler
@@ -113,6 +115,7 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api/v1")
+app.include_router(admin.router, prefix="/api/v1")
 
 @app.get("/health")
 def health():
