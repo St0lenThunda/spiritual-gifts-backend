@@ -24,6 +24,13 @@ class TokenVerifyRequest(BaseModel):
         json_schema_extra={"examples": ["v1_magic_link_token_abc123"]}
     )
 
+    @field_validator("token")
+    @classmethod
+    def token_must_not_be_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Token cannot be empty")
+        return v
+
 class UserResponse(BaseModel):
     """User response schema."""
     id: int = Field(..., description="Unique internal user ID")

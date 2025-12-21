@@ -10,7 +10,8 @@ from .config import settings
 from .logging_setup import setup_logging, logger, path_ctx, method_ctx, user_id_ctx, user_email_ctx, request_id_ctx
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from fastapi import Request, Response
+from fastapi import Request, Response, HTTPException
+from fastapi.exceptions import RequestValidationError
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -66,6 +67,8 @@ async def logging_middleware(request, call_next):
         )
         
         return response
+    except (HTTPException, RequestValidationError):
+        raise
     except Exception as e:
         duration = time.time() - start_time
         import traceback
