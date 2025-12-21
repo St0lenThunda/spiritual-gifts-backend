@@ -18,7 +18,7 @@ def test_survey_validation_valid(client):
     """Test that valid survey data is accepted."""
     from app.database import get_db as real_get_db
     # Re-apply override if needed or just rely on global
-    response = client.post("/survey/submit", json={
+    response = client.post("/api/v1/survey/submit", json={
         "answers": {1: 5, 2: 3, 3: 1},
         "notes": "Test notes"
     })
@@ -27,7 +27,7 @@ def test_survey_validation_valid(client):
 
 def test_survey_validation_invalid_score_high(client):
     """Test that survey data with score > 5 is rejected with 422."""
-    response = client.post("/survey/submit", json={
+    response = client.post("/api/v1/survey/submit", json={
         "answers": {1: 6},
         "notes": "Test notes"
     })
@@ -36,7 +36,7 @@ def test_survey_validation_invalid_score_high(client):
 
 def test_survey_validation_invalid_score_low(client):
     """Test that survey data with score < 1 is rejected with 422."""
-    response = client.post("/survey/submit", json={
+    response = client.post("/api/v1/survey/submit", json={
         "answers": {1: 0},
         "notes": "Test notes"
     })
@@ -45,7 +45,7 @@ def test_survey_validation_invalid_score_low(client):
 
 def test_survey_validation_empty_answers(client):
     """Test that empty answers dict is rejected."""
-    response = client.post("/survey/submit", json={
+    response = client.post("/api/v1/survey/submit", json={
         "answers": {},
         "notes": "Test notes"
     })
