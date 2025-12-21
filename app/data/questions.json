@@ -30,7 +30,7 @@
       {
         "id": 6,
         "text": "I like working behind the scenes to help others.",
-        "gift": "Service"
+        "gift": "Service/Helps"
       },
       {
         "id": 7,
@@ -80,7 +80,7 @@
       {
         "id": 16,
         "text": "I prefer supporting roles over being upfront.",
-        "gift": "Service"
+        "gift": "Service/Helps"
       },
       {
         "id": 17,
@@ -130,7 +130,7 @@
       {
         "id": 26,
         "text": "I enjoy practical hands-on help.",
-        "gift": "Service"
+        "gift": "Service/Helps"
       },
       {
         "id": 27,
@@ -180,7 +180,7 @@
       {
         "id": 36,
         "text": "I enjoy serving others in practical ways.",
-        "gift": "Service"
+        "gift": "Service/Helps"
       },
       {
         "id": 37,
@@ -230,7 +230,7 @@
       {
         "id": 46,
         "text": "I like taking care of behind-the-scenes tasks.",
-        "gift": "Service"
+        "gift": "Service/Helps"
       },
       {
         "id": 47,
@@ -280,7 +280,7 @@
       {
         "id": 56,
         "text": "I enjoy helping others succeed.",
-        "gift": "Service"
+        "gift": "Service/Helps"
       },
       {
         "id": 57,
@@ -330,7 +330,7 @@
       {
         "id": 66,
         "text": "I like filling practical needs others overlook.",
-        "gift": "Service"
+        "gift": "Service/Helps"
       },
       {
         "id": 67,
@@ -380,7 +380,7 @@
       {
         "id": 76,
         "text": "I enjoy assisting others without being recognized.",
-        "gift": "Service"
+        "gift": "Service/Helps"
       },
       {
         "id": 77,

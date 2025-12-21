@@ -10,27 +10,30 @@ from sqlalchemy.orm import Session
 from ..models import Survey, User
 
 
+from ..services.getJSONData import load_questions
+
+
 class SurveyService:
     """Service class for survey-related business logic."""
     
-    GIFT_MAPPINGS = {
-        "Leadership": [6, 16, 27, 43, 65],
-        "Administration": [1, 17, 31, 47, 59],
-        "Teaching": [2, 18, 33, 61, 73],
-        "Knowledge": [9, 24, 39, 68, 79],
-        "Wisdom": [3, 19, 48, 62, 74],
-        "Prophecy": [10, 25, 40, 54, 69],
-        "Discernment": [11, 26, 41, 55, 70],
-        "Exhortation": [20, 34, 49, 63, 75],
-        "Shepherding": [4, 21, 35, 50, 76],
-        "Faith": [12, 28, 42, 56, 80],
-        "Evangelism": [5, 36, 51, 64, 77],
-        "Apostleship": [13, 29, 44, 57, 71],
-        "Service/Helps": [14, 30, 46, 58, 72],
-        "Mercy": [7, 22, 37, 52, 66],
-        "Giving": [8, 23, 38, 53, 67],
-        "Hospitality": [15, 32, 45, 60, 78]
-    }
+    _gift_mappings: Optional[Dict[str, List[int]]] = None
+
+    @classmethod
+    def get_gift_mappings(cls) -> Dict[str, List[int]]:
+        """
+        Builds the gift mappings from the questions.json data.
+        Caches the result in a class variable for efficiency.
+        """
+        if cls._gift_mappings is None:
+            data = load_questions()
+            mappings = {}
+            for q in data["assessment"]["questions"]:
+                gift = q["gift"]
+                if gift not in mappings:
+                    mappings[gift] = []
+                mappings[gift].append(q["id"])
+            cls._gift_mappings = mappings
+        return cls._gift_mappings
 
     @staticmethod
     def calculate_scores(answers: Dict[Any, Any]) -> Dict[str, int]:
@@ -43,8 +46,9 @@ class SurveyService:
         Returns:
             Dictionary mapping Gift Name to Total Score
         """
+        mappings = SurveyService.get_gift_mappings()
         scores = {}
-        for gift, question_ids in SurveyService.GIFT_MAPPINGS.items():
+        for gift, question_ids in mappings.items():
             total = 0
             for q_id in question_ids:
                 # Handle potential string keys and missing answers
