@@ -39,8 +39,9 @@ def test_get_logs_as_admin(client, admin_token, db):
     )
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert len(data) >= 1
-    assert data[0]["event"] == "test_event"
+    assert "items" in data
+    assert len(data["items"]) >= 1
+    assert data["items"][0]["event"] == "test_event"
 
 def test_get_logs_filtering(client, admin_token, db):
     # Add logs with different levels
@@ -54,8 +55,9 @@ def test_get_logs_filtering(client, admin_token, db):
         headers={"Authorization": f"Bearer {admin_token}"}
     )
     data = response.json()
-    assert all(d["level"] == "ERROR" for d in data)
-    assert any(d["event"] == "error_event" for d in data)
+    items = data["items"]
+    assert all(d["level"] == "ERROR" for d in items)
+    assert any(d["event"] == "error_event" for d in items)
 
     # Filter by email
     response = client.get(
@@ -63,7 +65,8 @@ def test_get_logs_filtering(client, admin_token, db):
         headers={"Authorization": f"Bearer {admin_token}"}
     )
     data = response.json()
-    assert all("user1" in d["user_email"] for d in data)
+    items = data["items"]
+    assert all("user1" in d["user_email"] for d in items)
 
     # Filter by event
     response = client.get(
@@ -71,7 +74,8 @@ def test_get_logs_filtering(client, admin_token, db):
         headers={"Authorization": f"Bearer {admin_token}"}
     )
     data = response.json()
-    assert all("info" in d["event"].lower() for d in data)
+    items = data["items"]
+    assert all("info" in d["event"].lower() for d in items)
 
 def test_get_logs_sorting(client, admin_token, db):
     db.add(LogEntry(level="INFO", event="a_event", user_email="a@example.com"))
@@ -83,9 +87,10 @@ def test_get_logs_sorting(client, admin_token, db):
         "/api/v1/admin/logs?sort_by=event&order=asc",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    data = [d for d in response.json() if d["event"] in ["a_event", "z_event"]]
-    assert data[0]["event"] == "a_event"
-    assert data[1]["event"] == "z_event"
+    data = response.json()
+    items = [d for d in data["items"] if d["event"] in ["a_event", "z_event"]]
+    assert items[0]["event"] == "a_event"
+    assert items[1]["event"] == "z_event"
 
 def test_list_users_as_admin(client, admin_token, regular_user):
     response = client.get(
@@ -94,7 +99,8 @@ def test_list_users_as_admin(client, admin_token, regular_user):
     )
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    emails = [u["email"] for u in data]
+    assert "items" in data
+    emails = [u["email"] for u in data["items"]]
     assert regular_user.email in emails
 
 def test_list_users_filtering_sorting(client, admin_token, regular_user, admin_user):
@@ -104,7 +110,8 @@ def test_list_users_filtering_sorting(client, admin_token, regular_user, admin_u
         headers={"Authorization": f"Bearer {admin_token}"}
     )
     data = response.json()
-    assert all(u["role"] == "admin" for u in data)
+    items = data["items"]
+    assert all(u["role"] == "admin" for u in items)
 
     # Filter by email
     response = client.get(
@@ -112,7 +119,8 @@ def test_list_users_filtering_sorting(client, admin_token, regular_user, admin_u
         headers={"Authorization": f"Bearer {admin_token}"}
     )
     data = response.json()
-    assert all("regular" in u["email"] for u in data)
+    items = data["items"]
+    assert all("regular" in u["email"] for u in items)
 
     # Sort by id DESC
     response = client.get(
@@ -120,7 +128,8 @@ def test_list_users_filtering_sorting(client, admin_token, regular_user, admin_u
         headers={"Authorization": f"Bearer {admin_token}"}
     )
     data = response.json()
-    assert data[0]["id"] > data[1]["id"]
+    items = data["items"]
+    assert items[0]["id"] > items[1]["id"]
 
 def test_admin_routes_forbidden_for_regular_user(client, user_token):
     routes = ["/api/v1/admin/logs", "/api/v1/admin/users"]

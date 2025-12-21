@@ -20,6 +20,7 @@ class TokenVerifyRequest(BaseModel):
     """Request schema for verifying magic link token."""
     token: str = Field(
         ..., 
+        min_length=1,
         description="Magic link token received via email",
         json_schema_extra={"examples": ["v1_magic_link_token_abc123"]}
     )

@@ -34,27 +34,30 @@ def test_auth_service_update_last_login(db: Session):
 def test_survey_service_calculate_scores():
     """Test spiritual gift score calculation logic."""
     # Mock answers (1-5 range)
-    # Question 6 is Leadership (GIFT_MAPPINGS)
-    # Question 1 is Administration
+    # Question 6 is Service (id 6 in questions.json)
+    # Question 16 matches Service
+    # Question 26 matches Service
+    # Question 36 matches Service
+    # Question 46 matches Service
     answers = {
-        6: 5, # Leadership
-        16: 4, # Leadership
-        27: 3, # Leadership
-        43: 2, # Leadership
-        65: 1, # Leadership -> Total 15
-        "1": 5, # Administration (string key)
-        17: 5, # Administration
-        31: 5, # Administration
-        47: 5, # Administration
-        59: 5, # Administration -> Total 25
+        6: 5, # Service
+        16: 4, # Service
+        26: 3, # Service
+        36: 2, # Service
+        46: 1, # Service -> Total 15
+        "1": 5, # Administration (string key, Q1)
+        11: 5, # Administration (Q11)
+        21: 5, # Administration (Q21)
+        31: 5, # Administration (Q31)
+        41: 5, # Administration (Q41) -> Total 25
     }
     
     scores = SurveyService.calculate_scores(answers)
     
-    assert scores["Leadership"] == 15
+    assert scores["Service"] == 15
     assert scores["Administration"] == 25
-    assert scores["Teaching"] == 0 # Default for mission answers
-    assert len(scores) == 16 # Total gifts
+    assert scores["Teaching"] == 0 # Default for missing answers
+    assert len(scores) == 10 # Total gifts in questions.json
 
 def test_survey_service_create_survey(db: Session):
     """Test persisting a survey to the database."""
