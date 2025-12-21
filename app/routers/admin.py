@@ -14,15 +14,36 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 @router.get("/logs", response_model=List[dict])
 async def get_system_logs(
+    level: str = None,
+    user_email: str = None,
+    event: str = None,
+    sort_by: str = "timestamp",
+    order: str = "desc",
     limit: int = 100,
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """
-    Retrieve system logs from the database.
+    Retrieve system logs from the database with filtering and sorting.
     Only accessible by administrators.
     """
-    logs = db.query(LogEntry).order_by(LogEntry.timestamp.desc()).limit(limit).all()
+    query = db.query(LogEntry)
+    
+    # Filtering
+    if level:
+        query = query.filter(LogEntry.level == level.upper())
+    if user_email:
+        query = query.filter(LogEntry.user_email.ilike(f"%{user_email}%"))
+    if event:
+        query = query.filter(LogEntry.event.ilike(f"%{event}%"))
+        
+    # Sorting
+    if order.lower() == "desc":
+        sort_attr = getattr(LogEntry, sort_by).desc()
+    else:
+        sort_attr = getattr(LogEntry, sort_by).asc()
+        
+    logs = query.order_by(sort_attr).limit(limit).all()
     
     # Convert to dict for easier response handling
     result = []
@@ -43,11 +64,29 @@ async def get_system_logs(
 
 @router.get("/users", response_model=List[schemas.UserResponse])
 async def list_all_users(
+    role: str = None,
+    email: str = None,
+    sort_by: str = "id",
+    order: str = "asc",
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """
-    List all users in the system.
+    List all users in the system with filtering and sorting.
     Only accessible by administrators.
     """
-    return db.query(User).all()
+    query = db.query(User)
+    
+    # Filtering
+    if role:
+        query = query.filter(User.role == role.lower())
+    if email:
+        query = query.filter(User.email.ilike(f"%{email}%"))
+        
+    # Sorting
+    if order.lower() == "desc":
+        sort_attr = getattr(User, sort_by).desc()
+    else:
+        sort_attr = getattr(User, sort_by).asc()
+        
+    return query.order_by(sort_attr).all()
