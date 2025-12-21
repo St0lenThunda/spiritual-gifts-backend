@@ -22,7 +22,12 @@ async def lifespan(app: FastAPI):
 # Initialize structured logging
 # setup_logging() is automatically called on import from app.logging_setup
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Spiritual Gifts Assessment API",
+    description="Backend service for user authentication (Magic Links) and spiritual gifts assessment processing.",
+    version="1.1.0",
+    lifespan=lifespan
+)
 app.state.limiter = limiter
 
 @app.middleware("http")
