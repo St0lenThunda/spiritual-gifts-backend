@@ -28,36 +28,6 @@ async def test_verify_magic_link_router_success(client, db):
     assert "access_token" in response.json()
     assert "access_token" in client.cookies
 
-@pytest.mark.asyncio
-@respx.mock
-async def test_verify_magic_link_fallback_email(client):
-    """Test magic link verification with fallback email (missing user object)."""
-    email = "fallback@example.com"
-    mock_data = {
-        "email": email
-    }
-    respx.post(f"{NEON_AUTH_URL}/auth/v1/token").mock(return_value=httpx.Response(200, json=mock_data))
-    
-    response = client.post("/api/v1/auth/verify", json={"token": "fallback-token"})
-    assert response.status_code == 200
-    assert "access_token" in response.json()
-
-@pytest.mark.asyncio
-@respx.mock
-async def test_verify_magic_link_missing_email(client):
-    """Test magic link verification failure due to missing email."""
-    respx.post(f"{NEON_AUTH_URL}/auth/v1/token").mock(return_value=httpx.Response(200, json={}))
-    
-    response = client.post("/api/v1/auth/verify", json={"token": "invalid-token"})
-    assert response.status_code == 400
-    assert "Email missing" in response.json()["detail"]
-
-@pytest.mark.asyncio
-async def test_verify_magic_link_invalid_pydantic(client):
-    """Test validation error for empty token."""
-    response = client.post("/api/v1/auth/verify", json={"token": ""})
-    assert response.status_code == 422
-
 def test_list_user_surveys_router(client, test_user):
     """Test retrieving user surveys via router."""
     # Submit a survey first

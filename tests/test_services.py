@@ -32,20 +32,29 @@ def test_auth_service_update_last_login(db: Session):
     assert isinstance(user.last_login, datetime)
 
 def test_survey_service_calculate_scores():
-    """Test spiritual gift score calculation logic with normalized data."""
-    # Administration questions: 1, 11, 21, 31, 41, 51, 61, 71
-    # Apostleship questions: 2, 12, 22, 32, 42, 52, 62, 72
+    """Test spiritual gift score calculation logic."""
+    # Mock answers (1-5 range)
+    # Question 6 is Leadership (GIFT_MAPPINGS)
+    # Question 1 is Administration
     answers = {
-        1: 5, 11: 5, 21: 5, 31: 5, # Administration -> 20
-        2: 4, 12: 4, "22": 4, 32: 4, # Apostleship -> 16
+        6: 5, # Leadership
+        16: 4, # Leadership
+        27: 3, # Leadership
+        43: 2, # Leadership
+        65: 1, # Leadership -> Total 15
+        "1": 5, # Administration (string key)
+        17: 5, # Administration
+        31: 5, # Administration
+        47: 5, # Administration
+        59: 5, # Administration -> Total 25
     }
     
     scores = SurveyService.calculate_scores(answers)
     
-    assert scores["Administration"] == 20
-    assert scores["Apostleship"] == 16
-    assert scores["Teaching"] == 0 
-    assert len(scores) == 10 # 10 gifts defined in questions.json
+    assert scores["Leadership"] == 15
+    assert scores["Administration"] == 25
+    assert scores["Teaching"] == 0 # Default for mission answers
+    assert len(scores) == 16 # Total gifts
 
 def test_survey_service_create_survey(db: Session):
     """Test persisting a survey to the database."""

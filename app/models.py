@@ -21,7 +21,7 @@ class Survey(Base):
     __tablename__ = "surveys"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # Nullable for legacy data
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Nullable for legacy data
     neon_user_id = Column(String, index=True)  # Keep for backward compatibility
     answers = Column(JSON)
     scores = Column(JSON)

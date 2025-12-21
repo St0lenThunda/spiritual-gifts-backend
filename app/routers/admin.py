@@ -12,19 +12,20 @@ from .. import schemas
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-@router.get("/logs", response_model=List[dict])
+@router.get("/logs")
 async def get_system_logs(
     level: str = None,
     user_email: str = None,
     event: str = None,
     sort_by: str = "timestamp",
     order: str = "desc",
-    limit: int = 100,
+    page: int = 1,
+    limit: int = 20,
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """
-    Retrieve system logs from the database with filtering and sorting.
+    Retrieve system logs from the database with filtering, sorting, and pagination.
     Only accessible by administrators.
     """
     query = db.query(LogEntry)
@@ -43,12 +44,18 @@ async def get_system_logs(
     else:
         sort_attr = getattr(LogEntry, sort_by).asc()
         
-    logs = query.order_by(sort_attr).limit(limit).all()
+    # Calculate totals
+    total = query.count()
+    pages = (total + limit - 1) // limit
+    
+    # Pagination
+    offset = (page - 1) * limit
+    logs = query.order_by(sort_attr).offset(offset).limit(limit).all()
     
     # Convert to dict for easier response handling
-    result = []
+    items = []
     for log in logs:
-        result.append({
+        items.append({
             "id": log.id,
             "timestamp": log.timestamp.isoformat(),
             "level": log.level,
@@ -60,19 +67,28 @@ async def get_system_logs(
             "exception": log.exception,
             "context": log.context
         })
-    return result
+        
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": pages
+    }
 
-@router.get("/users", response_model=List[schemas.UserResponse])
+@router.get("/users")
 async def list_all_users(
     role: str = None,
     email: str = None,
     sort_by: str = "id",
     order: str = "asc",
+    page: int = 1,
+    limit: int = 20,
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """
-    List all users in the system with filtering and sorting.
+    List all users in the system with filtering, sorting, and pagination.
     Only accessible by administrators.
     """
     query = db.query(User)
@@ -88,8 +104,22 @@ async def list_all_users(
         sort_attr = getattr(User, sort_by).desc()
     else:
         sort_attr = getattr(User, sort_by).asc()
+
+    # Calculate totals
+    total = query.count()
+    pages = (total + limit - 1) // limit
+
+    # Pagination
+    offset = (page - 1) * limit
+    users = query.order_by(sort_attr).offset(offset).limit(limit).all()
         
-    return query.order_by(sort_attr).all()
+    return {
+        "items": users,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": pages
+    }
 
 @router.get("/schema", response_model=dict)
 async def get_db_schema(current_admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):

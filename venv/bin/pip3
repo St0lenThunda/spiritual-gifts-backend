@@ -1,4 +1,4 @@
-#!/home/thunda/Dev/543_Tools/spiritual_gifts_backend/venv/bin/python3
+#!/home/thunda/123_Labs/spiritual-gifts/backend/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
