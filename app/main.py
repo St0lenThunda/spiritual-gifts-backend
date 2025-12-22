@@ -150,14 +150,18 @@ async def health(check_external: bool = False):
         # Check database connectivity
         db = SessionLocal()
         try:
+            db_start = time.time()
             db.execute(text("SELECT 1"))
+            db_latency = (time.time() - db_start) * 1000  # Convert to ms
             status["database"] = "connected"
+            status["database_latency_ms"] = round(db_latency, 2)
         finally:
             db.close()
     except Exception as e:
         logger.error("health_check_failed", error=str(e))
         status["status"] = "degraded"
         status["database"] = "disconnected"
+        status["database_latency_ms"] = None
         status["error"] = str(e)
         
     # 2. Check External Services (Optional)

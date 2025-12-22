@@ -27,7 +27,11 @@ def test_health_check_paths(monkeypatch):
     # Check v1 path
     resp_v1 = client.get("/api/v1/health")
     assert resp_v1.status_code == 200
-    assert resp_v1.json()["status"] == "ok"
+    data = resp_v1.json()
+    assert data["status"] == "ok"
+    assert "database_latency_ms" in data
+    # It might be 0.0 or small positive number in mock, but should be float or int
+    assert isinstance(data["database_latency_ms"], (int, float))
 
 @respx.mock
 def test_health_check_external_via_v1(monkeypatch):
