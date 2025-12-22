@@ -54,7 +54,8 @@ def test_db_logger_processor_exception():
         # We don't want to fail the test if the log processor fails, 
         # as it's designed to fail silently (except for stderr)
         with patch("sys.stderr.write") as mock_stderr:
-            event_dict = {"event": "test_event"}
+            # Include user_id so the log is not skipped as anonymous INFO
+            event_dict = {"event": "test_event", "user_id": 1}
             result = db_logger_processor(None, "info", event_dict)
             assert result == event_dict
             mock_stderr.assert_called()
@@ -114,9 +115,9 @@ def test_validate_answers_manually():
     with pytest.raises(ValueError):
         SurveyCreate.validate_answers({1: 0})
 
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_get_json_data_main():
     import runpy
-    import os
-    # Mocking print to avoid cluttering test output
+    # Test the module's __main__ block to ensure coverage
     with patch("builtins.print"):
         runpy.run_module("app.services.getJSONData", run_name="__main__")

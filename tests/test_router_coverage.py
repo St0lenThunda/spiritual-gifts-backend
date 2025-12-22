@@ -30,15 +30,14 @@ async def test_verify_magic_link_router_success(client, db):
 
 def test_list_user_surveys_router(client, test_user):
     """Test retrieving user surveys via router."""
-    # Submit a survey first
+    # Login first to get session cookie
+    client.post("/api/v1/auth/dev-login", json={"email": test_user.email})
+    
+    # Submit a survey
     client.post(
         "/api/v1/survey/submit", 
-        json={"answers": {"1": 5}, "scores": {"Administration": 5}},
-        cookies={"access_token": client.cookies.get("access_token")} # Wait, we need to be logged in
+        json={"answers": {"1": 5}, "scores": {"Administration": 5}}
     )
-    
-    # Simpler: use dev-login to get session
-    client.post("/api/v1/auth/dev-login", json={"email": test_user.email})
     
     response = client.get("/api/v1/user/surveys")
     assert response.status_code == 200

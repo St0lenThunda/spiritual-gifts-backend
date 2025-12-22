@@ -1,5 +1,3 @@
-
-import pytest
 import pytest
 from app.logging_setup import mask_email
 from app.routers import router
@@ -7,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
 from app.routers.admin import get_db_schema
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 
 
