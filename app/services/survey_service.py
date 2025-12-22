@@ -94,20 +94,33 @@ class SurveyService:
         return survey
     
     @staticmethod
-    def get_user_surveys(db: Session, user: User) -> List[Survey]:
+    def get_user_surveys(db: Session, user: User, page: int = 1, limit: int = 20) -> Dict[str, Any]:
         """
-        Get all surveys for a user, ordered by creation date (newest first).
+        Get paginated surveys for a user, ordered by creation date (newest first).
         
         Args:
             db: Database session
             user: User to get surveys for
+            page: Page number (1-indexed)
+            limit: Items per page
             
         Returns:
-            List of Survey objects
+            Dictionary with items, total, page, limit, pages
         """
-        return (
-            db.query(Survey)
-            .filter(Survey.user_id == user.id)
-            .order_by(Survey.created_at.desc())
-            .all()
-        )
+        query = db.query(Survey).filter(Survey.user_id == user.id)
+        
+        # Calculate totals
+        total = query.count()
+        pages = (total + limit - 1) // limit
+        
+        # Apply pagination
+        offset = (page - 1) * limit
+        items = query.order_by(Survey.created_at.desc()).offset(offset).limit(limit).all()
+        
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": pages
+        }

@@ -42,7 +42,9 @@ def test_list_user_surveys_router(client, test_user):
     
     response = client.get("/api/v1/user/surveys")
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    data = response.json()
+    assert "items" in data
+    assert isinstance(data["items"], list)
 
 def test_static_data_endpoints(client):
     """Test public static data endpoints."""

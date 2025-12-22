@@ -214,23 +214,26 @@ def submit_survey(
     logger.info("survey_submitted", survey_id=survey.id)
     return survey
 
-@router.get("/user/surveys", response_model=List[schemas.SurveyResponse])
+@router.get("/user/surveys")
 def list_user_surveys(
+    page: int = 1,
+    limit: int = 20,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    List all surveys for the authenticated user.
+    List surveys for the authenticated user (paginated).
     
     Args:
+        page: Page number (default: 1)
+        limit: Items per page (default: 20)
         current_user: Current authenticated user
         db: Database session
         
     Returns:
-        List of user's surveys
+        Paginated survey response
     """
-    surveys = SurveyService.get_user_surveys(db, current_user)
-    return surveys
+    return SurveyService.get_user_surveys(db, current_user, page, limit)
 
 # ============================================================================
 # Public Routes

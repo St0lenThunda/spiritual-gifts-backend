@@ -87,10 +87,14 @@ def test_survey_service_get_user_surveys(db: Session):
     SurveyService.create_survey(db, user, {1: 5})
     
     surveys = SurveyService.get_user_surveys(db, user)
-    assert len(surveys) == 2
+    # With pagination, returns dict with 'items'
+    assert len(surveys["items"]) == 2
+    assert surveys["total"] == 2
+    
     # Check ordering (newest first)
-    assert surveys[0].scores["Administration"] == 5
-    assert surveys[1].scores["Administration"] == 3
+    items = surveys["items"]
+    assert items[0].scores["Administration"] == 5
+    assert items[1].scores["Administration"] == 3
 
 def test_get_json_data():
     """Test loading static JSON data."""
