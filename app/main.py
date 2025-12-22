@@ -58,6 +58,9 @@ async def logging_middleware(request, call_next):
         response = await call_next(request)
         duration = time.time() - start_time
         
+        # Add Request-ID to headers
+        response.headers["X-Request-ID"] = request_id
+        
         # Log successful request
         logger.info(
             "request_completed",
@@ -80,9 +83,14 @@ async def logging_middleware(request, call_next):
         # We return a generic 500 response here to ensure the middleware
         # doesn't let the exception crawl up to Starlette's default text handler
         from fastapi.responses import JSONResponse
+        content = {
+            "detail": "An unexpected server error occurred. Our team has been notified.",
+            "request_id": request_id
+        }
         return JSONResponse(
             status_code=500,
-            content={"detail": "An unexpected server error occurred. Our team has been notified."}
+            content=content,
+            headers={"X-Request-ID": request_id}
         )
 @app.exception_handler(RateLimitExceeded)
 async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
