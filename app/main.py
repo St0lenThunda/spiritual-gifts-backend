@@ -168,17 +168,21 @@ async def health(check_external: bool = False):
     if check_external:
         import httpx
         try:
+            start_time = time.time()
             async with httpx.AsyncClient(timeout=5.0) as client:
                 resp = await client.get("https://sga-v1.netlify.app/")
+                duration = (time.time() - start_time) * 1000
                 status["netlify"] = {
                     "status": "ok" if resp.status_code == 200 else "error",
-                    "code": resp.status_code
+                    "code": resp.status_code,
+                    "latency_ms": round(duration, 2)
                 }
         except Exception as e:
             logger.error("external_health_check_failed", service="netlify", error=str(e))
             status["netlify"] = {
                 "status": "unreachable",
-                "error": str(e)
+                "error": str(e),
+                "latency_ms": None
             }
             # Only downgrade overall status if DB is fine but external is down?
             # For now, let's keep overall status focused on BACKEND health.

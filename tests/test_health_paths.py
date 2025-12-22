@@ -51,4 +51,7 @@ def test_health_check_external_via_v1(monkeypatch):
     
     resp = client.get("/api/v1/health?check_external=true")
     assert resp.status_code == 200
-    assert resp.json()["netlify"]["status"] == "ok"
+    data = resp.json()
+    assert data["netlify"]["status"] == "ok"
+    assert "latency_ms" in data["netlify"]
+    assert isinstance(data["netlify"]["latency_ms"], (int, float))
