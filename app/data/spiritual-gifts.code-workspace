@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../../../spiritual_gifts_backend"
+		},
+		{
+			"path": "../../../docs"
 		}
 	],
 	"settings": {}
