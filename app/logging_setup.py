@@ -14,13 +14,43 @@ path_ctx: ContextVar[str] = ContextVar("path", default=None)
 method_ctx: ContextVar[str] = ContextVar("method", default=None)
 request_id_ctx: ContextVar[str] = ContextVar("request_id", default=None)
 
+def mask_email(email: str) -> str:
+    """
+    Mask an email address to protect PII.
+    Example: 'johndoe@example.com' -> 'j***@example.com'
+    """
+    if not email or "@" not in email:
+        return email
+    
+    try:
+        local_part, domain = email.split("@", 1)
+        if len(local_part) <= 1:
+            masked_local = "*" * 3
+        else:
+            masked_local = local_part[0] + "***"
+        return f"{masked_local}@{domain}"
+    except Exception:
+        return email
+
+def pii_masking_processor(logger: Any, method_name: str, event_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Processor that masks PII fields (like user_email) in the event dict.
+    Must run AFTER merge_contextvars so that it catches context-injected values too.
+    """
+    if "user_email" in event_dict and isinstance(event_dict["user_email"], str):
+        event_dict["user_email"] = mask_email(event_dict["user_email"])
+    
+    return event_dict
+
 def db_logger_processor(logger: Any, method_name: str, event_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
     Processor that writes log entries to the database.
     """
-    # We use the current SessionLocal from database module (handles monkeypatching in tests)
-    db = database.SessionLocal()
+    db = None
     try:
+        # We use the current SessionLocal from database module (handles monkeypatching in tests)
+        db = database.SessionLocal()
+        
         # Extract fields from event_dict and context
         # Prioritize event_dict (where merge_contextvars puts things) then fall back to contextvars
         u_id = event_dict.get("user_id") or user_id_ctx.get()
@@ -45,7 +75,8 @@ def db_logger_processor(logger: Any, method_name: str, event_dict: Dict[str, Any
         # Avoid infinite recursion if DB logging fails
         sys.stderr.write(f"Failed to write log to DB: {str(e)}\n")
     finally:
-        db.close()
+        if db:
+            db.close()
         
     return event_dict
 
@@ -53,6 +84,7 @@ def setup_logging():
     """Configure structlog. Can be called manually if needed to reconfigure."""
     processors = [
         structlog.contextvars.merge_contextvars,
+        pii_masking_processor, # Mask PII before any other processing
         structlog.processors.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),

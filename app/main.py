@@ -128,7 +128,36 @@ app.include_router(admin.router, prefix="/api/v1")
 @app.get("/health")
 def health():
     """
-    Minimal health check endpoint to keep the server warm.
-    Does not touch the database or load heavy dependencies.
+    Health check endpoint that verifies server and database status.
+    Returns 503 if database is unavailable to ensure load balancers take us out of rotation.
     """
-    return {"status": "ok"}
+    status = {
+        "status": "ok",
+        "database": "unknown",
+        "timestamp": None
+    }
+    
+    import time
+    from sqlalchemy import text
+    from .database import SessionLocal
+
+    status["timestamp"] = time.time()
+    
+    try:
+        # Check database connectivity
+        db = SessionLocal()
+        try:
+            db.execute(text("SELECT 1"))
+            status["database"] = "connected"
+        finally:
+            db.close()
+            
+        return status
+    except Exception as e:
+        logger.error("health_check_failed", error=str(e))
+        status["status"] = "degraded"
+        status["database"] = "disconnected"
+        status["error"] = str(e)
+        
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=503, content=status)
