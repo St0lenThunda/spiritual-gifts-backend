@@ -5,21 +5,13 @@ This provides a simple email/password authentication for development purposes.
 from datetime import datetime
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+from sqlalchemy.orm import Session
 
 from .models import User
 from .neon_auth import create_access_token
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def hash_password(password: str) -> str:
-    """Hash a password for storing."""
-    return pwd_context.hash(password)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+# Password hashing context removed as it was unused
 
 async def dev_login(email: str, password: str, db: Session) -> dict:
     """

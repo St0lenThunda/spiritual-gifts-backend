@@ -69,6 +69,15 @@ def db_logger_processor(logger: Any, method_name: str, event_dict: Dict[str, Any
             exception=event_dict.get("exception"),
             context={k: v for k, v in event_dict.items() if k not in ["event", "status_code", "exception", "user_id", "user_email", "request_id"]}
         )
+        
+        # SKIP ANONYMOUS INFO LOGS
+        # We don't want to fill the DB with every public page view or health check
+        is_anonymous = (u_id is None and u_email is None)
+        is_info = (log_entry.level == "INFO")
+        
+        if is_anonymous and is_info:
+            return event_dict
+
         db.add(log_entry)
         db.commit()
     except Exception as e:

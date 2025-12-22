@@ -126,10 +126,12 @@ app.include_router(router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 
 @app.get("/health")
-def health():
+@app.get("/api/v1/health")
+async def health(check_external: bool = False):
     """
     Health check endpoint that verifies server and database status.
     Returns 503 if database is unavailable to ensure load balancers take us out of rotation.
+    Optionally checks external services (Netlify) if check_external=True.
     """
     status = {
         "status": "ok",
@@ -143,6 +145,7 @@ def health():
 
     status["timestamp"] = time.time()
     
+    # 1. Check Database
     try:
         # Check database connectivity
         db = SessionLocal()
@@ -151,13 +154,34 @@ def health():
             status["database"] = "connected"
         finally:
             db.close()
-            
-        return status
     except Exception as e:
         logger.error("health_check_failed", error=str(e))
         status["status"] = "degraded"
         status["database"] = "disconnected"
         status["error"] = str(e)
         
+    # 2. Check External Services (Optional)
+    if check_external:
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get("https://sga-v1.netlify.app/")
+                status["netlify"] = {
+                    "status": "ok" if resp.status_code == 200 else "error",
+                    "code": resp.status_code
+                }
+        except Exception as e:
+            logger.error("external_health_check_failed", service="netlify", error=str(e))
+            status["netlify"] = {
+                "status": "unreachable",
+                "error": str(e)
+            }
+            # Only downgrade overall status if DB is fine but external is down?
+            # For now, let's keep overall status focused on BACKEND health.
+            # But frontend can use the specific 'netlify' field to show red/green.
+
+    if status["database"] != "connected":
         from fastapi.responses import JSONResponse
         return JSONResponse(status_code=503, content=status)
+        
+    return status

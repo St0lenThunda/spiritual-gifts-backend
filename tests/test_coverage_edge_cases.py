@@ -4,23 +4,13 @@ from fastapi import HTTPException, status
 from unittest.mock import MagicMock, patch
 import sys
 
-from app.dev_auth import hash_password, verify_password
+
 from app.neon_auth import create_access_token, get_current_user, get_current_admin
 from app.logging_setup import db_logger_processor, setup_logging
 from app.models import User, LogEntry
 from app.services.survey_service import SurveyService
 
-def test_password_utils():
-    # Use a very short password to avoid any potential length issues
-    pwd = "short"
-    try:
-        hashed = hash_password(pwd)
-        assert verify_password(pwd, hashed) is True
-    except ValueError as e:
-        if "72 bytes" in str(e):
-             # If we still hit this, maybe hash_password is being called differently
-             pytest.skip(f"Bcrypt length issue: {str(e)}")
-        raise
+
 
 def test_create_access_token_with_delta():
     delta = timedelta(minutes=10)

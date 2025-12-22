@@ -113,7 +113,7 @@ async def get_current_user(
         token = request.cookies.get("access_token")
         
     if not token:
-        logger.info("unauthorized_access", reason="missing_token", path=request.url.path)
+        logger.warning("unauthorized_access", reason="missing_token", path=request.url.path)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
