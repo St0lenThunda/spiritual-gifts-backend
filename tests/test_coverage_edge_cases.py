@@ -44,15 +44,15 @@ async def test_get_current_admin_not_admin():
     assert "Administrative privileges required" in excinfo.value.detail
 
 def test_db_logger_processor_exception():
-    # Mock database.SessionLocal to raise an exception
-    with patch("app.database.SessionLocal") as mock_session_factory:
+    # Patch the SessionLocal used within the logging_setup module
+    with patch("app.logging_setup.database.SessionLocal") as mock_session_factory:
         mock_session = MagicMock()
         mock_session_factory.return_value = mock_session
+        # Setup the context manager to return the mock_session
+        mock_session.__enter__.return_value = mock_session
+        # Make commit raise an exception
         mock_session.commit.side_effect = Exception("DB Error")
         
-        # This should hit the except block and write to stderr
-        # We don't want to fail the test if the log processor fails, 
-        # as it's designed to fail silently (except for stderr)
         with patch("sys.stderr.write") as mock_stderr:
             # Include user_id so the log is not skipped as anonymous INFO
             event_dict = {"event": "test_event", "user_id": 1}

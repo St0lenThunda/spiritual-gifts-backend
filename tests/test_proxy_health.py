@@ -16,9 +16,11 @@ def test_health_check_with_external_success(monkeypatch):
     class MockDB:
         def execute(self, query):
             pass
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc_val, exc_tb): pass
         def close(self):
             pass
-    monkeypatch.setattr(database, "SessionLocal", lambda: MockDB())
+    monkeypatch.setattr(database, "SessionLocal", MockDB)
 
     # Mock Netlify response
     route = respx.get("https://sga-v1.netlify.app/").mock(return_value=Response(200))
@@ -42,9 +44,11 @@ def test_health_check_with_external_failure(monkeypatch):
     class MockDB:
         def execute(self, query):
             pass
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc_val, exc_tb): pass
         def close(self):
             pass
-    monkeypatch.setattr(database, "SessionLocal", lambda: MockDB())
+    monkeypatch.setattr(database, "SessionLocal", MockDB)
 
     # Mock Netlify 404
     respx.get("https://sga-v1.netlify.app/").mock(return_value=Response(404))

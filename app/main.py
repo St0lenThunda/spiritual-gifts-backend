@@ -19,6 +19,34 @@ async def lifespan(app: FastAPI):
     # In production, use Alembic migrations: `alembic upgrade head`
     if settings.ENV == "development":
         Base.metadata.create_all(bind=engine)
+    
+    # Initialize Redis Cache with Memory Fallback
+    from fastapi_cache import FastAPICache
+    from fastapi_cache.backends.inmemory import InMemoryBackend
+    
+    cache_initialized = False
+    if settings.REDIS_ENABLED:
+        try:
+            import redis
+            from fastapi_cache.backends.redis import RedisBackend
+            # use a sync connection to check ping
+            r = redis.from_url(settings.REDIS_URL, socket_connect_timeout=1)
+            if r.ping():
+                import redis.asyncio as aioredis
+                redis_instance = aioredis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
+                FastAPICache.init(RedisBackend(redis_instance), prefix="fastapi-cache")
+                logger.info("Redis cache initialized successfully")
+                cache_initialized = True
+        except Exception as e:
+            logger.info(f"Redis unreachable at {settings.REDIS_URL}, falling back to in-memory caching: {e}")
+    
+    if not cache_initialized:
+        FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
+        if not settings.REDIS_ENABLED:
+            logger.info("Memory cache initialized (Redis explicitly disabled)")
+        else:
+            logger.info("Memory cache initialized (Redis unreachable)")
+    
     yield
 
 # Initialize structured logging
@@ -148,15 +176,12 @@ async def health(check_external: bool = False):
     # 1. Check Database
     try:
         # Check database connectivity
-        db = SessionLocal()
-        try:
+        with SessionLocal() as db:
             db_start = time.time()
             db.execute(text("SELECT 1"))
             db_latency = (time.time() - db_start) * 1000  # Convert to ms
             status["database"] = "connected"
             status["database_latency_ms"] = round(db_latency, 2)
-        finally:
-            db.close()
     except Exception as e:
         logger.error("health_check_failed", error=str(e))
         status["status"] = "degraded"

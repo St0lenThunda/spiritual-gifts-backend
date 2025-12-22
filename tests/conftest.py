@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 os.environ["NEON_API_KEY"] = "dummy"
 os.environ["NEON_PROJECT_ID"] = "dummy"
+os.environ["REDIS_ENABLED"] = "False"
 
 import app.database as db_app
 from app.main import app

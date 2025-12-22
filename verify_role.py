@@ -13,16 +13,16 @@ def verify():
     print(f"Connecting to: {settings.DATABASE_URL[:20]}...")
     engine = create_engine(settings.DATABASE_URL)
     SessionLocal = sessionmaker(bind=engine)
-    db = SessionLocal()
     
     try:
-        user = db.query(User).filter(User.email == 'tonym415@gmail.com').first()
-        if user:
-            print(f"SUCCESS: Found user {user.email} with role '{user.role}'")
-        else:
-            print("ERROR: User not found")
-    finally:
-        db.close()
+        with SessionLocal() as db:
+            user = db.query(User).filter(User.email == 'tonym415@gmail.com').first()
+            if user:
+                print(f"SUCCESS: Found user {user.email} with role '{user.role}'")
+            else:
+                print("ERROR: User not found")
+    except Exception as e:
+        print(f"ERROR: {str(e)}")
 
 if __name__ == "__main__":
     verify()

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
+from fastapi_cache.decorator import cache
 
 from ..neon_auth import (
     neon_send_magic_link, 
@@ -240,7 +241,8 @@ def list_user_surveys(
 # ============================================================================
 
 @router.get("/questions")
-def get_questions():
+@cache(expire=3600)
+async def get_questions():
     """
     Get the assessment questions.
     
@@ -250,7 +252,8 @@ def get_questions():
     return load_questions()
 
 @router.get("/gifts")
-def get_gifts():
+@cache(expire=3600)
+async def get_gifts():
     """
     Get information about spiritual gifts.
     
@@ -260,7 +263,8 @@ def get_gifts():
     return load_gifts()
 
 @router.get("/scriptures")
-def get_scriptures():
+@cache(expire=3600)
+async def get_scriptures():
     """
     Get scripture references.
     

@@ -17,8 +17,10 @@ def test_health_check_external_exception(monkeypatch):
     from app import database
     class MockDB:
         def execute(self, query): pass
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc_val, exc_tb): pass
         def close(self): pass
-    monkeypatch.setattr(database, "SessionLocal", lambda: MockDB())
+    monkeypatch.setattr(database, "SessionLocal", MockDB)
 
     # Mock Netlify to raise an exception (e.g. timeout)
     respx.get("https://sga-v1.netlify.app/").mock(side_effect=httpx.ConnectError("Connection failed"))

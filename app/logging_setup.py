@@ -46,46 +46,41 @@ def db_logger_processor(logger: Any, method_name: str, event_dict: Dict[str, Any
     """
     Processor that writes log entries to the database.
     """
-    db = None
+    # We use the current SessionLocal from database module (handles monkeypatching in tests)
     try:
-        # We use the current SessionLocal from database module (handles monkeypatching in tests)
-        db = database.SessionLocal()
-        
-        # Extract fields from event_dict and context
-        # Prioritize event_dict (where merge_contextvars puts things) then fall back to contextvars
-        u_id = event_dict.get("user_id") or user_id_ctx.get()
-        u_email = event_dict.get("user_email") or user_email_ctx.get()
-        
-        log_entry = LogEntry(
-            timestamp=datetime.utcnow(),
-            level=method_name.upper(),
-            event=event_dict.get("event"),
-            user_id=u_id,
-            user_email=u_email,
-            path=path_ctx.get(),
-            method=method_ctx.get(),
-            status_code=event_dict.get("status_code"),
-            request_id=event_dict.get("request_id") or request_id_ctx.get(),
-            exception=event_dict.get("exception"),
-            context={k: v for k, v in event_dict.items() if k not in ["event", "status_code", "exception", "user_id", "user_email", "request_id"]}
-        )
-        
-        # SKIP ANONYMOUS INFO LOGS
-        # We don't want to fill the DB with every public page view or health check
-        is_anonymous = (u_id is None and u_email is None)
-        is_info = (log_entry.level == "INFO")
-        
-        if is_anonymous and is_info:
-            return event_dict
+        with database.SessionLocal() as db:
+            # Extract fields from event_dict and context
+            # Prioritize event_dict (where merge_contextvars puts things) then fall back to contextvars
+            u_id = event_dict.get("user_id") or user_id_ctx.get()
+            u_email = event_dict.get("user_email") or user_email_ctx.get()
+            
+            log_entry = LogEntry(
+                timestamp=datetime.utcnow(),
+                level=method_name.upper(),
+                event=event_dict.get("event"),
+                user_id=u_id,
+                user_email=u_email,
+                path=path_ctx.get(),
+                method=method_ctx.get(),
+                status_code=event_dict.get("status_code"),
+                request_id=event_dict.get("request_id") or request_id_ctx.get(),
+                exception=event_dict.get("exception"),
+                context={k: v for k, v in event_dict.items() if k not in ["event", "status_code", "exception", "user_id", "user_email", "request_id"]}
+            )
+            
+            # SKIP ANONYMOUS INFO LOGS
+            # We don't want to fill the DB with every public page view or health check
+            is_anonymous = (u_id is None and u_email is None)
+            is_info = (log_entry.level == "INFO")
+            
+            if is_anonymous and is_info:
+                return event_dict
 
-        db.add(log_entry)
-        db.commit()
+            db.add(log_entry)
+            db.commit()
     except Exception as e:
         # Avoid infinite recursion if DB logging fails
         sys.stderr.write(f"Failed to write log to DB: {str(e)}\n")
-    finally:
-        if db:
-            db.close()
         
     return event_dict
 

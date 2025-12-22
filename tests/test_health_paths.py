@@ -15,9 +15,11 @@ def test_health_check_paths(monkeypatch):
     class MockDB:
         def execute(self, query):
             pass
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc_val, exc_tb): pass
         def close(self):
             pass
-    monkeypatch.setattr(database, "SessionLocal", lambda: MockDB())
+    monkeypatch.setattr(database, "SessionLocal", MockDB)
 
     # Check root path
     resp_root = client.get("/health")
@@ -39,13 +41,12 @@ def test_health_check_external_via_v1(monkeypatch):
     Test check_external via /api/v1/health.
     """
     from app import database
-    monkeypatch.setattr(database, "SessionLocal", lambda: object())
-    
-    # Mock return
     class MockDB:
         def execute(self, query): pass
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc_val, exc_tb): pass
         def close(self): pass
-    monkeypatch.setattr(database, "SessionLocal", lambda: MockDB())
+    monkeypatch.setattr(database, "SessionLocal", MockDB)
 
     respx.get("https://sga-v1.netlify.app/").mock(return_value=Response(200))
     
