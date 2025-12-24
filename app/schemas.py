@@ -73,3 +73,61 @@ class SurveyResponse(BaseModel):
     created_at: datetime = Field(..., description="Timestamp when the survey was submitted")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# Organization schemas (Multi-tenancy)
+from uuid import UUID
+
+class OrganizationCreate(BaseModel):
+    """Schema for creating a new organization."""
+    name: str = Field(..., min_length=2, max_length=255, description="Organization display name")
+    slug: str = Field(
+        ..., 
+        min_length=3, 
+        max_length=100, 
+        pattern=r"^[a-z0-9-]+$",
+        description="URL-friendly identifier (lowercase, numbers, hyphens)"
+    )
+
+    @field_validator("slug")
+    @classmethod
+    def validate_slug(cls, v: str) -> str:
+        if v.startswith("-") or v.endswith("-"):
+            raise ValueError("Slug cannot start or end with a hyphen")
+        if "--" in v:
+            raise ValueError("Slug cannot contain consecutive hyphens")
+        reserved = ["www", "api", "app", "admin", "auth", "billing", "help", "support"]
+        if v in reserved:
+            raise ValueError(f"'{v}' is a reserved slug")
+        return v.lower()
+
+
+class OrganizationUpdate(BaseModel):
+    """Schema for updating an organization."""
+    name: Optional[str] = Field(None, min_length=2, max_length=255)
+
+
+class OrganizationResponse(BaseModel):
+    """Schema for organization responses."""
+    id: UUID = Field(..., description="Unique organization ID")
+    name: str = Field(..., description="Organization display name")
+    slug: str = Field(..., description="URL-friendly identifier")
+    plan: str = Field(..., description="Subscription plan (free, starter, growth, enterprise)")
+    is_active: bool = Field(..., description="Whether the organization is active")
+    created_at: datetime = Field(..., description="When the organization was created")
+    updated_at: datetime = Field(..., description="When the organization was last modified")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OrganizationMemberInvite(BaseModel):
+    """Schema for inviting a member to an organization."""
+    email: EmailStr = Field(..., description="Email address of the person to invite")
+    role: str = Field("user", description="Role to assign (user or admin)")
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: str) -> str:
+        if v not in ["user", "admin"]:
+            raise ValueError("Role must be 'user' or 'admin'")
+        return v

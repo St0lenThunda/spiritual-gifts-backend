@@ -215,6 +215,10 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.include_router(router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 
+# Multi-tenancy routes
+from .routers import organizations
+app.include_router(organizations.router, prefix="/api/v1")
+
 @app.get("/health")
 @app.get("/api/v1/health")
 async def health(check_external: bool = False):
@@ -223,8 +227,11 @@ async def health(check_external: bool = False):
     Returns 503 if database is unavailable to ensure load balancers take us out of rotation.
     Optionally checks external services (Netlify) if check_external=True.
     """
+    from app import __version__
+    
     status = {
         "status": "ok",
+        "version": __version__,
         "database": "unknown",
         "timestamp": None
     }
