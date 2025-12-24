@@ -16,6 +16,15 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_ENABLED: bool = True
 
+    # Stripe Configuration
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_IDS: dict = {
+        "starter": "",
+        "growth": "",
+        "enterprise": ""
+    }
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
