@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
 from fastapi_cache.decorator import cache
+from fastapi_cache.coder import JsonCoder
+import json
+from typing import Any
 
 from ..neon_auth import (
     neon_send_magic_link, 
@@ -23,6 +26,13 @@ from ..config import settings
 from ..logging_setup import logger
 
 router = APIRouter()
+
+class SafeJsonCoder(JsonCoder):
+    @classmethod
+    def decode(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return json.loads(value)
+        return super().decode(value)
 
 # ============================================================================
 # Authentication Routes
@@ -241,7 +251,7 @@ def list_user_surveys(
 # ============================================================================
 
 @router.get("/questions")
-@cache(expire=3600)
+@cache(expire=3600, coder=SafeJsonCoder)
 async def get_questions():
     """
     Get the assessment questions.
@@ -252,7 +262,7 @@ async def get_questions():
     return load_questions()
 
 @router.get("/gifts")
-@cache(expire=3600)
+@cache(expire=3600, coder=SafeJsonCoder)
 async def get_gifts():
     """
     Get information about spiritual gifts.
@@ -263,7 +273,7 @@ async def get_gifts():
     return load_gifts()
 
 @router.get("/scriptures")
-@cache(expire=3600)
+@cache(expire=3600, coder=SafeJsonCoder)
 async def get_scriptures():
     """
     Get scripture references.
