@@ -10,7 +10,45 @@ from .config import settings
 from .logging_setup import setup_logging, logger, path_ctx, method_ctx, user_id_ctx, user_email_ctx, request_id_ctx
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from fastapi import Request, Response
+from fastapi import Request, Response, Depends
+from fastapi_csrf_protect import CsrfProtect
+from fastapi_csrf_protect.exceptions import CsrfProtectError
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # HSTS - 1 year, includes subdomains
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        # Prevent clickjacking
+        response.headers["X-Frame-Options"] = "DENY"
+        # Prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        # Referrer Policy
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        # Content Security Policy (Basic restrictive)
+        csp = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https://www.gravatar.com; "
+            "connect-src 'self' http://localhost:5173 http://localhost:5174 http://127.0.0.1:5173 http://127.0.0.1:5174 "
+            "https://spiritual-gifts-backend-d82f.onrender.com https://sga-v1.netlify.app;"
+        )
+        response.headers["Content-Security-Policy"] = csp
+        return response
+
+from pydantic_settings import BaseSettings
+class CsrfSettings(BaseSettings):
+    csrf_secret_key: str = settings.CSRF_SECRET_KEY
+    csrf_cookie_samesite: str = "lax"
+    csrf_cookie_secure: bool = False if settings.ENV == "development" else True
+    csrf_cookie_httponly: bool = False  # Allow frontend to read for header inclusion
+
+@CsrfProtect.load_config
+def get_csrf_config():
+    return CsrfSettings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,6 +97,9 @@ app = FastAPI(
     lifespan=lifespan
 )
 app.state.limiter = limiter
+
+
+# CSRF configuration is done above via get_csrf_config
 
 @app.middleware("http")
 async def logging_middleware(request, call_next):
@@ -120,7 +161,25 @@ async def logging_middleware(request, call_next):
             content=content,
             headers={"X-Request-ID": request_id}
         )
-@app.exception_handler(RateLimitExceeded)
+@app.exception_handler(CsrfProtectError)
+async def csrf_protect_exception_handler(request: Request, exc: CsrfProtectError):
+    """
+    Handle CSRF violations by returning 403 Forbidden.
+    """
+    logger.warning(
+        "csrf_violation",
+        client_ip=request.client.host if request.client else "unknown",
+        path=request.url.path,
+        error=exc.message
+    )
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": "CSRF validation failed. Please refresh and try again."}
+    )
+
+# CSRF token endpoint moved to routers/__init__.py
+
 async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
     """
     Log rate limit breaches before returning the 429 response.
@@ -133,7 +192,7 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
     )
     return _rate_limit_exceeded_handler(request, exc)
 
-# app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
 origins = [
     "http://localhost:5173",
     "http://localhost:5174",
@@ -149,6 +208,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add Security Headers Middleware LAST to ensure it wraps everything
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")

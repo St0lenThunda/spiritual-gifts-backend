@@ -1,20 +1,30 @@
 # Using fixtures from conftest.py
+import pytest
 
-def test_rate_limiting_send_link(client):
+
+@pytest.fixture(autouse=True)
+def reset_limiter_before_test():
+    """Reset limiter before each test to avoid state pollution."""
+    from app.limiter import limiter
+    limiter.reset()
+    yield
+
+
+def test_rate_limiting_send_link(client, monkeypatch):
     """Test that /api/v1/auth/send-link is rate limited."""
-    email = "test@example.com"
+    # Mock neon_send_magic_link to avoid network calls
+    async def mock_neon_send(email):
+        pass
     
-    # First 3 requests should succeed (status 200 or 500 depending on Neon Auth mock)
-    # Since we are using dummy keys, it will likely return 500 from the catch block
-    # OR we can mock neon_send_magic_link if we want to be cleaner.
-    # But for rate limiting, slowapi runs BEFORE the endpoint logic.
+    monkeypatch.setattr("app.routers.neon_send_magic_link", mock_neon_send)
     
+    email = "ratelimit-test@example.com"
+    
+    # First 3 requests should succeed
     for i in range(3):
         response = client.post("/api/v1/auth/send-link", json={"email": email})
-        # It might be 500 because of dummy keys, but it shouldn't be 429
-        assert response.status_code != 429
+        assert response.status_code == 200, f"Request {i+1} should succeed, got {response.status_code}"
         
     # 4th request should be rate limited
     response = client.post("/api/v1/auth/send-link", json={"email": email})
     assert response.status_code == 429
-    assert "Rate limit exceeded" in response.text

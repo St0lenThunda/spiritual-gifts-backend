@@ -43,6 +43,7 @@ async def test_magic_link_verify_missing_email(monkeypatch):
     """Cover routers/__init__.py:72, 77-78"""
     from app.routers import verify_magic_link
     from app import schemas
+    from unittest.mock import AsyncMock
     
     # Mock dependencies
     mock_neon_response = {"user": {}} 
@@ -54,11 +55,12 @@ async def test_magic_link_verify_missing_email(monkeypatch):
     
     req = schemas.TokenVerifyRequest(token="bad-token")
     
-    # Need fully mocked dependencies since we are calling router function directly
-    # db can be MagicMock
+    # Create a mock CsrfProtect with async validate_csrf
+    mock_csrf = MagicMock()
+    mock_csrf.validate_csrf = AsyncMock(return_value=None)
     
     with pytest.raises(HTTPException) as exc:
-        await verify_magic_link(req, MagicMock(), MagicMock(), MagicMock())
+        await verify_magic_link(req, MagicMock(), MagicMock(), MagicMock(), mock_csrf)
     assert exc.value.status_code == 400
     assert "Email missing" in exc.value.detail
 

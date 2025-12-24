@@ -6,8 +6,9 @@ class Settings(BaseSettings):
     NEON_API_KEY: str
     NEON_PROJECT_ID: str
     
-    # JWT Configuration
+    # Security Configuration
     JWT_SECRET_KEY: str = "your-secret-key-change-in-production-please-use-a-strong-random-key"
+    CSRF_SECRET_KEY: str = "csrf-secret-key-change-in-production-please"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_MINUTES: int = 60 * 24 * 7  # 7 days
     

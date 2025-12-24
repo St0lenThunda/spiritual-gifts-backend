@@ -7,6 +7,7 @@ from typing import List
 from datetime import datetime
 from fastapi_cache.decorator import cache
 from fastapi_cache.coder import JsonCoder
+from fastapi_csrf_protect import CsrfProtect
 import json
 from typing import Any
 
@@ -35,12 +36,31 @@ class SafeJsonCoder(JsonCoder):
         return super().decode(value)
 
 # ============================================================================
+# Security Routes
+# ============================================================================
+
+@router.get("/csrf-token")
+async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
+    """
+    Endpoint to provide a CSRF token for SPAs.
+    """
+    from fastapi.responses import JSONResponse
+    csrf_token, signed_token = csrf_protect.generate_csrf_tokens()
+    response = JSONResponse(content={"detail": "CSRF cookie set", "csrf_token": csrf_token})
+    csrf_protect.set_csrf_cookie(signed_token, response)
+    return response
+
+# ============================================================================
 # Authentication Routes
 # ============================================================================
 
 @router.post("/auth/send-link")
 @limiter.limit("3/10minutes")
-async def send_magic_link(request: Request, login_data: schemas.LoginRequest):
+async def send_magic_link(
+    request: Request, 
+    login_data: schemas.LoginRequest,
+    csrf_protect: CsrfProtect = Depends()
+):
     """
     Send a magic link to the user's email for passwordless authentication.
     
@@ -51,6 +71,7 @@ async def send_magic_link(request: Request, login_data: schemas.LoginRequest):
     Returns:
         Success message
     """
+    await csrf_protect.validate_csrf(request)
     await neon_send_magic_link(login_data.email)
     logger.info("magic_link_sent", user_email=login_data.email)
     return {"message": "Magic link sent successfully", "email": login_data.email}
@@ -60,7 +81,8 @@ async def verify_magic_link(
     request: schemas.TokenVerifyRequest, 
     response: Response,
     fastapi_request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends()
 ):
     """
     Verify the magic link token and return a JWT access token.
@@ -73,6 +95,7 @@ async def verify_magic_link(
     Returns:
         JWT access token
     """
+    await csrf_protect.validate_csrf(fastapi_request)
     # Verify the magic link with Neon Auth
     neon_response = await neon_verify_magic_link(request.token)
     
@@ -116,7 +139,8 @@ async def dev_login_endpoint(
     request: schemas.LoginRequest, 
     response: Response,
     fastapi_request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends()
 ):
     """
     Development login endpoint - bypasses magic link email for testing.
@@ -133,6 +157,7 @@ async def dev_login_endpoint(
     Returns:
         JWT access token
     """
+    await csrf_protect.validate_csrf(fastapi_request)
     if settings.ENV == "production":
         raise HTTPException(
             status_code=403, 
@@ -174,7 +199,8 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 async def logout(
     request: Request, 
     response: Response,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    csrf_protect: CsrfProtect = Depends()
 ):
     """
     Logout the current user by clearing the access token cookie.
@@ -186,6 +212,7 @@ async def logout(
     Returns:
         Success message
     """
+    await csrf_protect.validate_csrf(request)
     response.delete_cookie(
         key="access_token",
         httponly=True,
@@ -200,10 +227,12 @@ async def logout(
 # ============================================================================
 
 @router.post("/survey/submit", response_model=schemas.SurveyResponse)
-def submit_survey(
+async def submit_survey(
     survey_data: schemas.SurveyCreate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    fastapi_request: Request = None, # Added Request for CSRF
+    csrf_protect: CsrfProtect = Depends()
 ):
     """
     Submit a new survey for the authenticated user.
@@ -216,6 +245,8 @@ def submit_survey(
     Returns:
         Created survey object
     """
+    if fastapi_request:
+        await csrf_protect.validate_csrf(fastapi_request)
     survey = SurveyService.create_survey(
         db=db,
         user=current_user,

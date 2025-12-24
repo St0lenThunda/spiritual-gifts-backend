@@ -11,6 +11,7 @@ os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 os.environ["NEON_API_KEY"] = "dummy"
 os.environ["NEON_PROJECT_ID"] = "dummy"
 os.environ["REDIS_ENABLED"] = "False"
+os.environ["CSRF_SECRET_KEY"] = "test-csrf-secret-key-for-testing"
 
 import app.database as db_app
 from app.main import app
@@ -45,8 +46,23 @@ def clear_overrides():
     limiter.reset()
     if hasattr(app.state, "limiter"):
         app.state.limiter.enabled = True
+        app.state.limiter.reset()
     yield
+    # Also reset after test
+    limiter.reset()
+    if hasattr(app.state, "limiter"):
+        app.state.limiter.reset()
     app.dependency_overrides.clear()
+
+@pytest.fixture(autouse=True)
+def skip_csrf_validation(monkeypatch):
+    """Skip CSRF validation in tests by mocking validate_csrf to be a no-op."""
+    from fastapi_csrf_protect import CsrfProtect
+    
+    async def mock_validate_csrf(self, request):
+        pass  # No-op: skip CSRF validation in tests
+    
+    monkeypatch.setattr(CsrfProtect, "validate_csrf", mock_validate_csrf)
 
 @pytest.fixture
 def db():
