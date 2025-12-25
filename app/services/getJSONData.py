@@ -1,19 +1,27 @@
 import json
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-QUESTIONS_FILE = BASE_DIR / "data" / "questions.json"
-GIFTS_FILE = BASE_DIR / "data" / "gifts.json"   
-SCRIPTURES_FILE = BASE_DIR / "data" / "scriptures.json"
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+DATA_DIR = BASE_DIR / "data"
+LOCALES_DIR = DATA_DIR / "locales"
 
-def load_questions():
-    with QUESTIONS_FILE.open("r", encoding="utf-8") as f:
+def load_questions(locale: str = "en"):
+    file_path = LOCALES_DIR / f"questions_{locale}.json"
+    if not file_path.exists():
+        file_path = DATA_DIR / "questions.json"
+    with file_path.open("r", encoding="utf-8") as f:
         return json.load(f)
-def load_gifts():
-    with GIFTS_FILE.open("r", encoding="utf-8") as f:
+
+def load_gifts(locale: str = "en"):
+    file_path = LOCALES_DIR / f"gifts_{locale}.json"
+    if not file_path.exists():
+        file_path = DATA_DIR / "gifts.json"
+    with file_path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
 def load_scriptures():
-    with SCRIPTURES_FILE.open("r", encoding="utf-8") as f:
+    scriptures_file = DATA_DIR / "scriptures.json"
+    with scriptures_file.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 if __name__ == "__main__":

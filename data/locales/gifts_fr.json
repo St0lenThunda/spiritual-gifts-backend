@@ -1,0 +1,122 @@
+{
+  "Administration": {
+    "name": "Administration",
+    "definition": "La capacité de coordonner les personnes, les ressources et le temps pour aider l'église à atteindre ses objectifs et à être efficace.",
+    "scriptures": ["1 Cor. 12:28"],
+    "traits": ["Organisé", "Efficace", "Planificateur", "Orienté vers les objectifs"]
+  },
+  "Apostleship": {
+    "name": "Apostolat",
+    "definition": "La capacité de lancer de nouveaux ministères et de superviser leur développement, souvent dans de nouveaux lieux ou cultures.",
+    "scriptures": ["1 Cor. 12:28", "Eph. 4:11"],
+    "traits": ["Pionnier", "Visionnaire", "Entrepreneur", "Preneur de risques"]
+  },
+  "Discernment": {
+    "name": "Discernement",
+    "definition": "La capacité de distinguer entre la vérité et l'erreur, et de percevoir la présence d'esprits bons ou mauvais.",
+    "scriptures": ["1 Cor. 12:10"],
+    "traits": ["Perceptif", "Perspicace", "Intuitif", "Protecteur"]
+  },
+  "Evangelism": {
+    "name": "Évangélisation",
+    "definition": "La capacité de communiquer l'Évangile de manière efficace afin que les non-croyants deviennent des disciples de Jésus.",
+    "scriptures": ["Eph. 4:11"],
+    "traits": ["Persuasif", "Sociable", "Passionné", "Courageux"]
+  },
+  "Exhortation": {
+    "name": "Exhortation",
+    "definition": "La capacité d'encourager, de consoler et de défier les autres à grandir dans leur foi et à surmonter les luttes.",
+    "scriptures": ["Rom. 12:8"],
+    "traits": ["Encourageant", "Motivant", "Positif", "Conseiller"]
+  },
+  "Faith": {
+    "name": "Foi",
+    "definition": "La capacité de faire confiance à Dieu pour ce qui n'est pas vu et d'agir sur la base des promesses de Dieu avec confiance.",
+    "scriptures": ["1 Cor. 12:9"],
+    "traits": ["Confiant", "Optimiste", "Assuré", "Visionnaire"]
+  },
+  "Giving": {
+    "name": "Libéralité",
+    "definition": "La capacité de contribuer avec des ressources matérielles à l'œuvre du Seigneur avec générosité et joie.",
+    "scriptures": ["Rom. 12:8"],
+    "traits": ["Généreux", "Intendant", "Ingénieux", "Joyeux"]
+  },
+  "Healing": {
+    "name": "Guérison",
+    "definition": "La capacité d'être utilisé par Dieu pour restaurer la santé des malades par la prière et la dépendance au Saint-Esprit.",
+    "scriptures": ["1 Cor. 12:9", "1 Cor. 12:28"],
+    "traits": ["Compatissant", "Orienté vers la prière", "Plein de foi", "Restaurateur"]
+  },
+  "Hospitality": {
+    "name": "Hospitalité",
+    "definition": "La capacité d'accueillir et de prendre soin des invités et des étrangers avec un esprit chaleureux et généreux.",
+    "scriptures": ["1 Pet. 4:9"],
+    "traits": ["Accueillant", "Amical", "Gentil", "Inviteur"]
+  },
+  "Knowledge": {
+    "name": "Connaissance",
+    "definition": "La capacité de découvrir, d'accumuler, d'analyser et de clarifier des informations et des idées pertinentes pour la croissance et le bien-être du corps.",
+    "scriptures": ["1 Cor. 12:8"],
+    "traits": ["Studieux", "Curieux", "Observateur", "Perspicace"]
+  },
+  "Leadership": {
+    "name": "Leadership",
+    "definition": "La capacité de fixer des objectifs conformes au dessein de Dieu pour l'avenir et de communiquer ces objectifs aux autres de manière à ce qu'ils travaillent volontairement et harmonieusement pour les atteindre.",
+    "scriptures": ["Rom. 12:8"],
+    "traits": ["Influent", "Visionnaire", "Décisif", "Motivant"]
+  },
+  "Mercy": {
+    "name": "Miséricorde",
+    "definition": "La capacité de ressentir une empathie et une compassion sincères pour les personnes qui souffrent de problèmes physiques, mentaux ou émotionnels et de traduire cette compassion par des actes joyeux qui reflètent l'amour du Christ.",
+    "scriptures": ["Rom. 12:8"],
+    "traits": ["Compatissant", "Sensible", "Aimant", "Solidaire"]
+  },
+  "Miracles": {
+    "name": "Miracles",
+    "definition": "La capacité de servir d'intermédiaire humain par lequel il plaît à Dieu d'accomplir des actes puissants perçus par les observateurs comme modifiant le cours ordinaire de la nature.",
+    "scriptures": ["1 Cor. 12:10", "1 Cor. 12:28"],
+    "traits": ["Plein de foi", "Courageux", "Orienté vers la prière", "Expectatif"]
+  },
+  "Pastor/Shepherd": {
+    "name": "Pasteur",
+    "definition": "La capacité d'assumer une responsabilité personnelle à long terme pour le bien-être spirituel d'un groupe de croyants.",
+    "scriptures": ["Eph. 4:11"],
+    "traits": ["Nourrissant", "Protecteur", "Guide", "Relationnel"]
+  },
+  "Prophecy": {
+    "name": "Prophétie",
+    "definition": "La capacité de proclamer et d'appliquer la vérité de Dieu de manière pertinente pour la compréhension, la correction ou l'édification.",
+    "scriptures": ["Rom. 12:6", "1 Cor. 12:10", "1 Cor. 12:28", "Eph. 4:11"],
+    "traits": ["Franc", "Perspicace", "Direct", "Convaincant"]
+  },
+  "Service/Helps": {
+    "name": "Service/Aide",
+    "definition": "La capacité d'identifier les besoins non satisfaits impliqués dans une tâche liée à l'œuvre de Dieu, et d'utiliser les ressources disponibles pour répondre à ces besoins.",
+    "scriptures": ["Rom. 12:7", "1 Cor. 12:28"],
+    "traits": ["Pratique", "Utile", "Fiable", "Solidaire"]
+  },
+  "Teaching": {
+    "name": "Enseignement",
+    "definition": "La capacité de communiquer des informations pertinentes pour la santé et le ministère du corps de manière à ce que les autres apprennent.",
+    "scriptures": ["Rom. 12:7", "1 Cor. 12:28", "Eph. 4:11"],
+    "traits": ["Clair", "Systématique", "Articulé", "Instructif"]
+  },
+  "Tongues": {
+    "name": "Langues",
+    "definition": "La capacité de recevoir et de communiquer un message immédiat de Dieu à Son peuple par une expression divinement ointe dans une langue jamais apprise.",
+    "scriptures": ["1 Cor. 12:10", "1 Cor. 12:28"],
+    "traits": ["Spirituel", "Expressif", "Orienté vers la prière"]
+  },
+  "Interpretation": {
+    "name": "Interprétation",
+    "definition": "La capacité de faire connaître en langue vernaculaire le message de celui qui parle en langues.",
+    "scriptures": ["1 Cor. 12:10"],
+    "traits": ["Discernement", "Spirituel", "Articulé"]
+  },
+  "Wisdom": {
+    "name": "Sagesse",
+    "definition": "La capacité d'appliquer la vérité spirituelle de manière efficace pour répondre à un besoin dans une situation spécifique.",
+    "scriptures": ["1 Cor. 12:8"],
+    "traits": ["Pratique", "Perspicace", "Sensé", "Solutionneur de problèmes"]
+  }
+}

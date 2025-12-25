@@ -1,7 +1,7 @@
 """
 API routers for the Spiritual Gifts Assessment application.
 """
-from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, Header
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
@@ -283,25 +283,27 @@ def list_user_surveys(
 
 @router.get("/questions")
 @cache(expire=3600, coder=SafeJsonCoder)
-async def get_questions():
+async def get_questions(accept_language: str = Header("en")):
     """
     Get the assessment questions.
     
     Returns:
         Assessment questions
     """
-    return load_questions()
+    locale = accept_language[:2].lower() if accept_language else "en"
+    return load_questions(locale)
 
 @router.get("/gifts")
 @cache(expire=3600, coder=SafeJsonCoder)
-async def get_gifts():
+async def get_gifts(accept_language: str = Header("en")):
     """
     Get information about spiritual gifts.
     
     Returns:
         Spiritual gifts data
     """
-    return load_gifts()
+    locale = accept_language[:2].lower() if accept_language else "en"
+    return load_gifts(locale)
 
 @router.get("/scriptures")
 @cache(expire=3600, coder=SafeJsonCoder)
