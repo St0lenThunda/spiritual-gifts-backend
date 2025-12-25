@@ -23,6 +23,3 @@ def load_scriptures():
     scriptures_file = DATA_DIR / "scriptures.json"
     with scriptures_file.open("r", encoding="utf-8") as f:
         return json.load(f)
-
-if __name__ == "__main__":
-    print(load_questions())
