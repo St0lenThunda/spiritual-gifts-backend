@@ -251,7 +251,8 @@ async def submit_survey(
         db=db,
         user=current_user,
         answers=survey_data.answers,
-        scores=survey_data.scores
+        scores=survey_data.scores,
+        assessment_version=survey_data.assessment_version
     )
     logger.info("survey_submitted", survey_id=survey.id)
     return survey

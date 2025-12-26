@@ -58,7 +58,7 @@ DEMO_ORGS = [
     {
         "name": "Grace Community Fellowship",
         "slug": "grace-community",
-        "plan": "growth",
+        "plan": "ministry",
         "branding": {"theme_preset": "theme-light", "primary_color": "#0f172a"},
         "members": [
             {"name": "Pastor David Chen", "email": "david.chen@gracecommunity.org", "role": "admin", 
@@ -80,7 +80,7 @@ DEMO_ORGS = [
     {
         "name": "Harvest Point Church",
         "slug": "harvest-point",
-        "plan": "enterprise",
+        "plan": "church",
         "branding": {"theme_preset": "theme-dark", "primary_color": "#f59e0b"},
         "members": [
             {"name": "Rev. Angela Williams", "email": "angela.w@harvestpoint.church", "role": "admin",

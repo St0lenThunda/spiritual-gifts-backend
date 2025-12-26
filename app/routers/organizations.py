@@ -15,39 +15,10 @@ from ..schemas import (
     OrganizationMemberInvite,
 )
 from ..services.survey_service import SurveyService
-from ..neon_auth import get_current_user
+from ..services.audit_service import AuditService
+from ..neon_auth import get_current_user, require_org
 
 router = APIRouter(prefix="/organizations", tags=["Organizations"])
-
-
-async def get_current_org(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-) -> Organization:
-    """
-    Dependency to get the current user's organization.
-    Raises 404 if user is not part of any organization.
-    """
-    if not current_user.org_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User is not associated with any organization"
-        )
-    
-    org = db.query(Organization).filter(Organization.id == current_user.org_id).first()
-    if not org:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Organization not found"
-        )
-    
-    if not org.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Organization is inactive"
-        )
-    
-    return org
 
 
 @router.post("", response_model=OrganizationResponse, status_code=status.HTTP_201_CREATED)
@@ -84,12 +55,21 @@ async def create_organization(
     db.commit()
     db.refresh(org)
     
+    AuditService.log_action(
+        db=db,
+        user=current_user,
+        action="create_org",
+        target_type="organization",
+        target_id=str(org.id),
+        details={"name": org.name, "slug": org.slug}
+    )
+    
     return org
 
 
 @router.get("/me", response_model=OrganizationResponse)
 async def get_my_organization(
-    org: Organization = Depends(get_current_org)
+    org: Organization = Depends(require_org)
 ):
     """Get the current user's organization."""
     return org
@@ -98,7 +78,7 @@ async def get_my_organization(
 @router.patch("/me", response_model=OrganizationResponse)
 async def update_my_organization(
     org_data: OrganizationUpdate,
-    org: Organization = Depends(get_current_org),
+    org: Organization = Depends(require_org),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -121,12 +101,21 @@ async def update_my_organization(
     db.commit()
     db.refresh(org)
     
+    AuditService.log_action(
+        db=db,
+        user=current_user,
+        action="update_org",
+        target_type="organization",
+        target_id=str(org.id),
+        details=org_data.model_dump(exclude_unset=True)
+    )
+    
     return org
 
 
 @router.get("/me/members", response_model=List[dict])
 async def list_organization_members(
-    org: Organization = Depends(get_current_org),
+    org: Organization = Depends(require_org),
     db: Session = Depends(get_db)
 ):
     """List all members of the current organization."""
@@ -147,7 +136,7 @@ async def list_organization_members(
 @router.post("/me/invite", status_code=status.HTTP_202_ACCEPTED)
 async def invite_member(
     invite: OrganizationMemberInvite,
-    org: Organization = Depends(get_current_org),
+    org: Organization = Depends(require_org),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -179,6 +168,15 @@ async def invite_member(
     # TODO: Send invitation email
     # For now, just return success - email integration comes later
     
+    AuditService.log_action(
+        db=db,
+        user=current_user,
+        action="invite_member",
+        target_type="organization",
+        target_id=str(org.id),
+        details={"email": invite.email, "role": invite.role}
+    )
+    
     return {
         "message": f"Invitation sent to {invite.email}",
         "status": "pending"
@@ -205,7 +203,7 @@ async def check_slug_availability(
 
 @router.get("/me/analytics")
 async def get_organization_analytics(
-    org: Organization = Depends(get_current_org),
+    org: Organization = Depends(require_org),
     db: Session = Depends(get_db)
 ):
     """
@@ -218,7 +216,7 @@ async def get_organization_analytics(
 @router.get("/me/members/{member_id}/assessments")
 async def get_member_assessments(
     member_id: int,
-    org: Organization = Depends(get_current_org),
+    org: Organization = Depends(require_org),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):

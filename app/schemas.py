@@ -52,6 +52,7 @@ class SurveyCreate(BaseModel):
         None, 
         description="Optional pre-calculated scores (Prioritizes backend calculation if omitted)"
     )
+    assessment_version: str = Field("1.0", description="Version of the assessment questions used")
 
     @field_validator("answers")
     @classmethod
@@ -70,6 +71,7 @@ class SurveyResponse(BaseModel):
     neon_user_id: str = Field(..., description="User's email identifier")
     answers: Dict[int, int] = Field(..., description="The raw 1-indexed answers provided by the user")
     scores: Dict[str, float] = Field(..., description="Calculated totals for each spiritual gift category")
+    assessment_version: str = Field(..., description="Version of the assessment questions used")
     created_at: datetime = Field(..., description="Timestamp when the survey was submitted")
 
     model_config = ConfigDict(from_attributes=True)
@@ -113,7 +115,7 @@ class OrganizationResponse(BaseModel):
     id: UUID = Field(..., description="Unique organization ID")
     name: str = Field(..., description="Organization display name")
     slug: str = Field(..., description="URL-friendly identifier")
-    plan: str = Field(..., description="Subscription plan (free, starter, growth, enterprise)")
+    plan: str = Field(..., description="Subscription plan (free, individual, ministry, church)")
     branding: Optional[Dict[str, Any]] = Field({}, description="Visual branding configuration")
     is_active: bool = Field(..., description="Whether the organization is active")
     created_at: datetime = Field(..., description="When the organization was created")

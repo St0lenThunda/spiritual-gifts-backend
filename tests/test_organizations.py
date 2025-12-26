@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.main import app
 from app.models import Organization, User
-from app.routers.organizations import get_current_org
+from app.neon_auth import require_org, UserContext
+from app.routers.organizations import get_current_user
 
 
 client = TestClient(app)
@@ -43,57 +44,60 @@ def mock_org():
     org.plan = "free"
     org.is_active = True
     org.stripe_customer_id = None
-    org.created_at = "2025-12-24T00:00:00"
-    org.updated_at = "2025-12-24T00:00:00"
+    org.branding = {}
+    from datetime import datetime
+    org.created_at = datetime(2025, 12, 24)
+    org.updated_at = datetime(2025, 12, 24)
     return org
 
 
-class TestGetCurrentOrg:
-    """Tests for the get_current_org dependency."""
+class TestRequireOrg:
+    """Tests for the require_org dependency."""
 
     @pytest.mark.asyncio
-    async def test_user_without_org_raises_404(self, mock_user, mock_db):
-        """User without org_id should raise 404."""
-        mock_user.org_id = None
+    async def test_user_without_org_raises_403(self, mock_user):
+        """User context without organization should raise 403."""
+        context = UserContext(
+            user=mock_user,
+            organization=None,
+            role=mock_user.role
+        )
         
         with pytest.raises(Exception) as exc_info:
-            await get_current_org(current_user=mock_user, db=mock_db)
+            await require_org(context=context)
         
-        assert "404" in str(exc_info.value) or "not associated" in str(exc_info.value).lower()
+        assert "403" in str(exc_info.value) or "membership required" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
-    async def test_org_not_found_raises_404(self, mock_user, mock_db):
-        """User with org_id but org doesn't exist should raise 404."""
-        mock_user.org_id = uuid.uuid4()
-        mock_db.query.return_value.filter.return_value.first.return_value = None
-        
-        with pytest.raises(Exception) as exc_info:
-            await get_current_org(current_user=mock_user, db=mock_db)
-        
-        assert "404" in str(exc_info.value) or "not found" in str(exc_info.value).lower()
-
-    @pytest.mark.asyncio
-    async def test_inactive_org_raises_403(self, mock_user, mock_org, mock_db):
+    async def test_inactive_org_raises_403(self, mock_user, mock_org):
         """Inactive organization should raise 403."""
-        mock_user.org_id = mock_org.id
         mock_org.is_active = False
-        mock_db.query.return_value.filter.return_value.first.return_value = mock_org
+        context = UserContext(
+            user=mock_user,
+            organization=mock_org,
+            role=mock_user.role
+        )
         
         with pytest.raises(Exception) as exc_info:
-            await get_current_org(current_user=mock_user, db=mock_db)
+            await require_org(context=context)
         
         assert "403" in str(exc_info.value) or "inactive" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
-    async def test_valid_org_returns_org(self, mock_user, mock_org, mock_db):
+    async def test_valid_org_returns_org(self, mock_user, mock_org):
         """Valid active org should be returned."""
-        mock_user.org_id = mock_org.id
         mock_org.is_active = True
-        mock_db.query.return_value.filter.return_value.first.return_value = mock_org
+        context = UserContext(
+            user=mock_user,
+            organization=mock_org,
+            role=mock_user.role
+        )
         
-        result = await get_current_org(current_user=mock_user, db=mock_db)
+        result = await require_org(context=context)
         
         assert result == mock_org
+
+
 
 
 class TestCreateOrganization:
@@ -269,8 +273,7 @@ class TestAuthenticatedEndpoints:
     def setup_auth_override(self, mock_user, mock_org, mock_db):
         """Set up dependency overrides for authenticated tests."""
         from app.database import get_db
-        from app.neon_auth import get_current_user
-        from app.routers.organizations import get_current_org
+        from app.neon_auth import get_current_user, require_org
         
         # Configure mock user as admin with org
         mock_user.org_id = mock_org.id
@@ -287,7 +290,7 @@ class TestAuthenticatedEndpoints:
         # Override dependencies
         app.dependency_overrides[get_current_user] = lambda: mock_user
         app.dependency_overrides[get_db] = lambda: mock_db
-        app.dependency_overrides[get_current_org] = lambda: mock_org
+        app.dependency_overrides[require_org] = lambda: mock_org
         
         yield mock_user, mock_org, mock_db
         

@@ -4,16 +4,16 @@ Authentication utilities using Neon Auth for magic links and JWT for session man
 import httpx
 import structlog
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import List, Optional
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from .config import settings
 from .database import get_db
-from .models import User
+from .models import User, Organization
 from .logging_setup import user_id_ctx, user_email_ctx, logger
 
 # Neon Auth configuration
@@ -33,6 +33,15 @@ class NeonUser(BaseModel):
     """Neon user model."""
     id: str
     email: str
+
+class UserContext(BaseModel):
+    """Rich context object for authenticated requests."""
+    user: User
+    organization: Optional[Organization]
+    role: str
+    permissions: List[str] = []
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 # ============================================================================
 # JWT Token Utilities
@@ -87,24 +96,14 @@ def verify_token(token: str) -> dict:
 # Authentication Dependencies
 # ============================================================================
 
-async def get_current_user(
+async def get_user_context(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
-) -> User:
+) -> UserContext:
     """
-    Get the current authenticated user from JWT token (header or cookie).
-    
-    Args:
-        request: FastAPI request object
-        credentials: HTTP Bearer credentials from request header
-        db: Database session
-        
-    Returns:
-        User object for the authenticated user
-        
-    Raises:
-        HTTPException: If authentication fails
+    Get the full context for the current authenticated user requests.
+    Resolves User, Organization, and effective Role.
     """
     token = None
     if credentials:
@@ -139,6 +138,7 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Eagerly load organization
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         logger.warning("unauthorized_access", reason="user_not_found", user_id=user_id)
@@ -152,8 +152,57 @@ async def get_current_user(
     structlog.contextvars.bind_contextvars(user_id=user.id, user_email=user.email)
     user_id_ctx.set(user.id)
     user_email_ctx.set(user.email)
+
+    # Resolve Organization
+    org = user.organization  # Relies on SQLAlchemy relationship
     
-    return user
+    # Enforce Read-Only for Demo Org
+    if org and org.is_demo:
+        if request.method not in ["GET", "HEAD", "OPTIONS"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This is a demo organization. Write actions are disabled."
+            )
+    
+    # Determine effective role (expand Logic here later)
+    role = user.role
+
+    return UserContext(
+        user=user,
+        organization=org,
+        role=role,
+        permissions=[] 
+    )
+
+async def get_current_user(
+    context: UserContext = Depends(get_user_context)
+) -> User:
+    """
+    Legacy dependency wrapper: Returns the User object from the context.
+    Use this for backward compatibility with existing routes.
+    """
+    return context.user
+
+async def require_org(context: UserContext = Depends(get_user_context)) -> Organization:
+    """
+    Dependency that enforces the user belongs to an active Organization.
+    Returns the Organization object.
+    """
+    if not context.organization:
+        logger.warning("access_denied", reason="no_organization", user_id=context.user.id)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Organization membership required"
+        )
+    
+    if not context.organization.is_active:
+        logger.warning("access_denied", reason="org_inactive", org_id=str(context.organization.id))
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Organization is inactive"
+        )
+        
+    return context.organization
 
 async def get_current_admin(
     current_user: User = Depends(get_current_user)

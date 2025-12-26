@@ -67,7 +67,8 @@ class SurveyService:
         user: User,
         answers: Dict[int, int],
         scores: Optional[Dict[str, float]] = None,
-        org_id: Optional[UUID] = None
+        org_id: Optional[UUID] = None,
+        assessment_version: str = "1.0"
     ) -> Survey:
         """
         Create a new survey for a user.
@@ -78,6 +79,7 @@ class SurveyService:
             answers: Dictionary of question_id -> answer_value
             scores: Optional calculated gift scores (calculated if not provided)
             org_id: Optional organization ID for multi-tenancy
+            assessment_version: Version of the assessment questions
             
         Returns:
             Created Survey object
@@ -94,6 +96,7 @@ class SurveyService:
             answers=answers,
             scores=scores,
             org_id=survey_org_id,
+            assessment_version=assessment_version
         )
         db.add(survey)
         db.commit()

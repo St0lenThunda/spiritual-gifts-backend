@@ -7,7 +7,7 @@ Contains business logic for user authentication, including:
 """
 from datetime import datetime
 from sqlalchemy.orm import Session
-from ..models import User
+from ..models import User, Organization
 
 
 class AuthService:
@@ -28,7 +28,18 @@ class AuthService:
         user = db.query(User).filter(User.email == email).first()
         if not user:
             role = "admin" if email == "tonym415@gmail.com" else "user"
-            user = User(email=email, role=role, created_at=datetime.utcnow())
+            
+            # Auto-assign to Demo Org if no specific invite context (Basic implementation)
+            # Find the Demo Org
+            demo_org = db.query(Organization).filter(Organization.slug == "grace-community").first()
+            org_id = demo_org.id if demo_org else None
+            
+            user = User(
+                email=email, 
+                role=role, 
+                created_at=datetime.utcnow(),
+                org_id=org_id
+            )
             db.add(user)
             db.commit()
             db.refresh(user)

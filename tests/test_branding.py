@@ -9,7 +9,7 @@ async def test_branding_configuration_persistence(client, db):
     Verify that an organization admin can update the branding configuration
     and that it is correctly persisted and retrieved.
     """
-    from app.routers.organizations import get_current_user, get_current_org
+    from app.neon_auth import get_current_user, require_org
     from app.main import app
     
     # 1. Setup Test Data
@@ -19,7 +19,7 @@ async def test_branding_configuration_persistence(client, db):
         id=org_id, 
         name="Branding Test Org", 
         slug="brand-test", 
-        plan="growth",
+        plan="ministry",
         branding={}
     )
     db.add(org)
@@ -37,7 +37,7 @@ async def test_branding_configuration_persistence(client, db):
     
     # 2. Override Dependencies to simulate logged-in Admin
     app.dependency_overrides[get_current_user] = lambda: user
-    app.dependency_overrides[get_current_org] = lambda: org
+    app.dependency_overrides[require_org] = lambda: org
     
     try:
         # 3. Update Organization Branding via PATCH /api/v1/organizations/me
@@ -63,5 +63,5 @@ async def test_branding_configuration_persistence(client, db):
     finally:
         # Cleanup overrides
         del app.dependency_overrides[get_current_user]
-        del app.dependency_overrides[get_current_org]
+        del app.dependency_overrides[require_org]
 
