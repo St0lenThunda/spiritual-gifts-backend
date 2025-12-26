@@ -14,6 +14,7 @@ from ..schemas import (
     OrganizationResponse,
     OrganizationMemberInvite,
 )
+from ..services.survey_service import SurveyService
 from ..neon_auth import get_current_user
 
 router = APIRouter(prefix="/organizations", tags=["Organizations"])
@@ -197,3 +198,15 @@ async def check_slug_availability(
         "available": existing is None and not is_reserved,
         "reason": "reserved" if is_reserved else ("taken" if existing else None)
     }
+
+
+@router.get("/me/analytics")
+async def get_organization_analytics(
+    org: Organization = Depends(get_current_org),
+    db: Session = Depends(get_db)
+):
+    """
+    Get aggregated analytics for the current organization.
+    Available to all organization members, but typically used by admins.
+    """
+    return SurveyService.get_org_analytics(db, org_id=org.id)

@@ -8,7 +8,18 @@
 		},
 		{
 			"path": "../../../docs"
+		},
+		{
+			"path": "../../../../../../../../mnt/c/Users/Antonio_Moses/My Drive (tonym415@gmail.com)/Vault 2/01 Projects/Called & Equipped"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"i18n-ally.localesPaths": [
+			"backend/data/locales",
+			"frontend/src/i18n",
+			"frontend/src/locales",
+			"backend/venv/lib/python3.10/site-packages/pendulum/locales",
+			"backend/venv/lib64/python3.10/site-packages/pendulum/locales"
+		]
+	}
 }

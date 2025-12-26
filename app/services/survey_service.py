@@ -180,3 +180,66 @@ class SurveyService:
             "limit": limit,
             "pages": pages
         }
+
+    @staticmethod
+    def get_org_analytics(
+        db: Session,
+        org_id: UUID
+    ) -> Dict[str, Any]:
+        """
+        Calculates aggregated analytics for an organization.
+        
+        Args:
+            db: Database session
+            org_id: Organization ID
+            
+        Returns:
+            Dictionary containing analytics data:
+            - total_assessments: int
+            - gift_averages: Dict[str, float]
+            - top_gifts_distribution: Dict[str, int]
+        """
+        surveys = db.query(Survey).filter(Survey.org_id == org_id).all()
+        
+        total_assessments = len(surveys)
+        if total_assessments == 0:
+            return {
+                "total_assessments": 0,
+                "gift_averages": {},
+                "top_gifts_distribution": {}
+            }
+            
+        # Initialize accumulators
+        gift_totals = {}
+        top_gifts_counts = {}
+        
+        for survey in surveys:
+            scores = survey.scores or {}
+            
+            # Accumulate totals for averages
+            for gift, score in scores.items():
+                gift_totals[gift] = gift_totals.get(gift, 0) + score
+                
+            # Determine top gift for this survey
+            if scores:
+                top_gift = max(scores.items(), key=lambda x: x[1])[0]
+                top_gifts_counts[top_gift] = top_gifts_counts.get(top_gift, 0) + 1
+        
+        # Calculate averages
+        gift_averages = {
+            gift: round(total / total_assessments, 1)
+            for gift, total in gift_totals.items()
+        }
+        
+        # Sort distribution by count desc
+        sorted_distribution = dict(sorted(
+            top_gifts_counts.items(), 
+            key=lambda item: item[1], 
+            reverse=True
+        ))
+        
+        return {
+            "total_assessments": total_assessments,
+            "gift_averages": gift_averages,
+            "top_gifts_distribution": sorted_distribution
+        }

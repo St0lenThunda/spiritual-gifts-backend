@@ -41,10 +41,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 from pydantic_settings import BaseSettings
 class CsrfSettings(BaseSettings):
-    csrf_secret_key: str = settings.CSRF_SECRET_KEY
-    csrf_cookie_samesite: str = "lax"
-    csrf_cookie_secure: bool = False if settings.ENV == "development" else True
-    csrf_cookie_httponly: bool = False  # Allow frontend to read for header inclusion
+    secret_key: str = settings.CSRF_SECRET_KEY
+    cookie_samesite: str = "lax"
+    cookie_secure: bool = False if settings.ENV == "development" else True
+    cookie_httponly: bool = False  # Allow frontend to read for header inclusion
 
 @CsrfProtect.load_config
 def get_csrf_config():

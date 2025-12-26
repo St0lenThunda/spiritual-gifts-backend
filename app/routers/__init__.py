@@ -283,27 +283,35 @@ def list_user_surveys(
 
 @router.get("/questions")
 @cache(expire=3600, coder=SafeJsonCoder)
-async def get_questions(accept_language: str = Header("en")):
+async def get_questions(
+    accept_language: str = Header("en"),
+    locale: str = None
+):
     """
     Get the assessment questions.
     
     Returns:
         Assessment questions
     """
-    locale = accept_language[:2].lower() if accept_language else "en"
-    return load_questions(locale)
+    # Prefer query param for caching variance, fallback to header
+    final_locale = locale or (accept_language[:2].lower() if accept_language else "en")
+    return load_questions(final_locale)
 
 @router.get("/gifts")
 @cache(expire=3600, coder=SafeJsonCoder)
-async def get_gifts(accept_language: str = Header("en")):
+async def get_gifts(
+    accept_language: str = Header("en"),
+    locale: str = None
+):
     """
     Get information about spiritual gifts.
     
     Returns:
         Spiritual gifts data
     """
-    locale = accept_language[:2].lower() if accept_language else "en"
-    return load_gifts(locale)
+    # Prefer query param for caching variance, fallback to header
+    final_locale = locale or (accept_language[:2].lower() if accept_language else "en")
+    return load_gifts(final_locale)
 
 @router.get("/scriptures")
 @cache(expire=3600, coder=SafeJsonCoder)
