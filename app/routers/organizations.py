@@ -17,6 +17,7 @@ from ..schemas import (
 from ..services.survey_service import SurveyService
 from ..services.audit_service import AuditService
 from ..neon_auth import get_current_user, require_org
+from ..services.entitlements import get_plan_features, FEATURE_USERS
 
 router = APIRouter(prefix="/organizations", tags=["Organizations"])
 
@@ -64,7 +65,11 @@ async def create_organization(
         details={"name": org.name, "slug": org.slug}
     )
     
-    return org
+    # Add entitlements to response
+    response_org = OrganizationResponse.model_validate(org)
+    response_org.entitlements = get_plan_features(org.plan)
+    
+    return response_org
 
 
 @router.get("/me", response_model=OrganizationResponse)
@@ -72,7 +77,9 @@ async def get_my_organization(
     org: Organization = Depends(require_org)
 ):
     """Get the current user's organization."""
-    return org
+    response_org = OrganizationResponse.model_validate(org)
+    response_org.entitlements = get_plan_features(org.plan)
+    return response_org
 
 
 @router.patch("/me", response_model=OrganizationResponse)
@@ -110,7 +117,10 @@ async def update_my_organization(
         details=org_data.model_dump(exclude_unset=True)
     )
     
-    return org
+    response_org = OrganizationResponse.model_validate(org)
+    response_org.entitlements = get_plan_features(org.plan)
+    
+    return response_org
 
 
 @router.get("/me/members", response_model=List[dict])
@@ -148,6 +158,18 @@ async def invite_member(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only organization admins can invite members"
+        )
+    
+    # Tier Enforcement: Check member count
+    features = get_plan_features(org.plan)
+    max_users = features.get(FEATURE_USERS, 10)
+    current_member_count = db.query(User).filter(User.org_id == org.id).count()
+    
+    if current_member_count >= max_users:
+        logger.warning("tier_limit_reached", org_id=str(org.id), limit=max_users, current=current_member_count)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Your {org.plan} plan is limited to {max_users} members. Please upgrade to invite more."
         )
     
     # Check if user already exists

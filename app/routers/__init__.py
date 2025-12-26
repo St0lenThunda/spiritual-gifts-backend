@@ -229,9 +229,9 @@ async def logout(
 @router.post("/survey/submit", response_model=schemas.SurveyResponse)
 async def submit_survey(
     survey_data: schemas.SurveyCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    fastapi_request: Request = None, # Added Request for CSRF
     csrf_protect: CsrfProtect = Depends()
 ):
     """
@@ -245,8 +245,7 @@ async def submit_survey(
     Returns:
         Created survey object
     """
-    if fastapi_request:
-        await csrf_protect.validate_csrf(fastapi_request)
+    await csrf_protect.validate_csrf(request)
     survey = SurveyService.create_survey(
         db=db,
         user=current_user,

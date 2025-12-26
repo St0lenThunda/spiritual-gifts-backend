@@ -117,6 +117,7 @@ class OrganizationResponse(BaseModel):
     name: str = Field(..., description="Organization display name")
     slug: str = Field(..., description="URL-friendly identifier")
     plan: str = Field(..., description="Subscription plan (free, individual, ministry, church)")
+    entitlements: Optional[Dict[str, Any]] = Field(None, description="Feature limits and entitlements for the current plan")
     branding: Optional[Dict[str, Any]] = Field({}, description="Visual branding configuration")
     is_active: bool = Field(..., description="Whether the organization is active")
     created_at: datetime = Field(..., description="When the organization was created")

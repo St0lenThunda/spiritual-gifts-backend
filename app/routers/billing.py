@@ -10,6 +10,9 @@ from ..config import settings
 from ..database import get_db
 from ..models import Organization
 from ..services.event_store import is_event_processed, mark_event_processed
+from ..services.billing_service import BillingService
+from ..neon_auth import get_current_user, require_org
+from fastapi_csrf_protect import CsrfProtect
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +20,69 @@ router = APIRouter(prefix="/billing", tags=["Billing"])
 
 # Initialize Stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+@router.get("/status")
+async def get_billing_status(
+    org: Organization = Depends(require_org)
+):
+    """Get the current organization's subscription status and limits."""
+    return BillingService.get_subscription_status(org)
+
+
+@router.post("/create-checkout-session")
+async def create_checkout_session(
+    plan: str,
+    request: Request,
+    org: Organization = Depends(require_org),
+    csrf_protect: CsrfProtect = Depends()
+):
+    """Create a Stripe checkout session."""
+    await csrf_protect.validate_csrf(request)
+    
+    # Use referer as base for return URLs or settings
+    base_url = str(request.base_url).rstrip('/')
+    success_url = f"{base_url}/settings/organization?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{base_url}/settings/organization"
+    
+    try:
+        session = BillingService.create_checkout_session(
+            org_id=str(org.id),
+            plan=plan,
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+        return {"url": session.url}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create checkout session")
+
+
+@router.post("/create-portal-session")
+async def create_portal_session(
+    request: Request,
+    org: Organization = Depends(require_org),
+    csrf_protect: CsrfProtect = Depends()
+):
+    """Create a Stripe customer portal session."""
+    await csrf_protect.validate_csrf(request)
+    
+    if not org.stripe_customer_id:
+        raise HTTPException(status_code=400, detail="No Stripe customer found for this organization")
+    
+    return_url = f"{str(request.base_url).rstrip('/')}/settings/organization"
+    
+    try:
+        session = BillingService.create_portal_session(
+            customer_id=org.stripe_customer_id,
+            return_url=return_url
+        )
+        return {"url": session.url}
+    except Exception as e:
+        logger.error(f"Stripe error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create portal session")
 
 
 @router.post("/webhook")
