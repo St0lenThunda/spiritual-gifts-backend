@@ -36,6 +36,10 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
     
+    # User preferences
+    global_preferences = Column(JSON, default={}, nullable=True)  # Synced across orgs
+    org_preferences = Column(JSON, default={}, nullable=True)     # Per-org overrides
+    
     # Multi-tenancy
     org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True, index=True)
     

@@ -52,11 +52,37 @@ def get_csrf_config():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Database initialization
+    # Database initialization with retry logic for DNS resolution issues
     # In development, create_all() is convenient for rapid prototyping
     # In production, use Alembic migrations: `alembic upgrade head`
     if settings.ENV == "development":
-        Base.metadata.create_all(bind=engine)
+        import time
+        max_retries = 5
+        retry_delay = 2  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                Base.metadata.create_all(bind=engine)
+                logger.info(f"Database connection established successfully (attempt {attempt + 1}/{max_retries})")
+                break
+            except Exception as e:
+                error_msg = str(e).lower()
+                # Check if it's a DNS/connection error
+                if any(keyword in error_msg for keyword in ["name resolution", "connection refused", "network", "dns"]):
+                    if attempt < max_retries - 1:
+                        logger.warning(
+                            f"Database connection failed (attempt {attempt + 1}/{max_retries}): {e}. "
+                            f"Retrying in {retry_delay}s... This is often due to intermittent DNS resolution in WSL."
+                        )
+                        time.sleep(retry_delay)
+                        retry_delay *= 1.5  # Exponential backoff
+                    else:
+                        logger.error(f"Failed to connect to database after {max_retries} attempts: {e}")
+                        raise
+                else:
+                    # If it's not a connection/DNS error, raise immediately
+                    logger.error(f"Database initialization error: {e}")
+                    raise
     
     # Initialize Redis Cache with Memory Fallback
     from fastapi_cache import FastAPICache
@@ -218,6 +244,10 @@ app.include_router(admin.router, prefix="/api/v1")
 # Multi-tenancy routes
 from .routers import organizations
 app.include_router(organizations.router, prefix="/api/v1")
+
+# User preferences routes
+from .routers import preferences
+app.include_router(preferences.router, prefix="/api/v1")
 
 # Billing and Stripe webhook routes
 from .routers import billing

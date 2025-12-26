@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
-from typing import Optional, Dict, Annotated, Any
+from typing import Optional, Dict, Annotated, Any, List
 from datetime import datetime
 
 # Authentication schemas
@@ -45,7 +45,7 @@ class SurveyCreate(BaseModel):
     )]] = Field(
         ..., 
         description="Dictionary of 1-indexed assessment questions and their user-selected scores",
-        json_schema_extra={"examples": [{1: 5, 2: 4, 3: 1, 4: 2}]}
+        json_schema_extra={"examples": [{"1": 5, "2": 4, "3": 1, "4": 2}]}
     )
     notes: Optional[str] = Field(None, description="Optional personal notes or reflections about the assessment")
     scores: Optional[Dict[str, float]] = Field(
@@ -54,15 +54,36 @@ class SurveyCreate(BaseModel):
     )
     assessment_version: str = Field("1.0", description="Version of the assessment questions used")
 
-    @field_validator("answers")
+    @field_validator("answers", mode="before")
     @classmethod
-    def validate_answers(cls, v: Dict[int, int]) -> Dict[int, int]:
+    def validate_answers(cls, v):
         if not v:
             raise ValueError("Answers cannot be empty")
+        
+        # Handle both dict and already-validated input
+        if not isinstance(v, dict):
+            raise ValueError("Answers must be a dictionary")
+        
+        # Convert string keys to integers and validate
+        converted = {}
         for key, value in v.items():
-            if not (1 <= value <= 5):
-                raise ValueError(f"Score for question {key} must be between 1 and 5")
-        return v
+            try:
+                int_key = int(key)
+            except (ValueError, TypeError):
+                raise ValueError(f"Question key '{key}' must be a valid integer")
+            
+            # Ensure value is an integer
+            try:
+                int_value = int(value)
+            except (ValueError, TypeError):
+                raise ValueError(f"Answer value for question {int_key} must be an integer")
+            
+            if not (1 <= int_value <= 5):
+                raise ValueError(f"Score for question {int_key} must be between 1 and 5")
+            
+            converted[int_key] = int_value
+        
+        return converted
 
 class SurveyResponse(BaseModel):
     """Schema for survey responses."""
@@ -137,3 +158,28 @@ class OrganizationMemberInvite(BaseModel):
         if v not in ["user", "admin"]:
             raise ValueError("Role must be 'user' or 'admin'")
         return v
+
+# User Preference schemas
+class PreferenceUpdate(BaseModel):
+    """Schema for updating user preferences."""
+    theme: Optional[str] = Field(None, description="Theme preference ID")
+    locale: Optional[str] = Field(None, description="Preferred language code (en, es, fr, ru)")
+    sync_across_orgs: Optional[bool] = Field(None, description="Whether to sync preferences across organizations")
+    notifications: Optional[Dict[str, bool]] = Field(None, description="Notification preferences")
+    ui: Optional[Dict[str, Any]] = Field(None, description="UI preferences")
+
+
+class UserPreferences(BaseModel):
+    """Schema for user preferences response."""
+    theme: Optional[str] = None
+    locale: str = "en"
+    sync_across_orgs: bool = True
+    notifications: Dict[str, bool] = {"email": True, "toast": True}
+    ui: Dict[str, Any] = {}
+
+
+class ThemeAnalytics(BaseModel):
+    """Schema for theme analytics response."""
+    total_users: int
+    theme_distribution: List[Dict[str, Any]]
+    org_has_custom_theme: bool
