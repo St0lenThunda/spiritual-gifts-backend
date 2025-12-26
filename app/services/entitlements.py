@@ -27,9 +27,9 @@ SUPPORT_PRIORITY = "priority"
 
 # Theme Lists
 THEMES_FREE = ["light", "dark", "synthwave"]
-THEMES_INDIVIDUAL = ["light", "dark", "synthwave", "ocean", "forest", "sunset"]
-THEMES_MINISTRY = ["light", "dark", "synthwave", "ocean", "forest", "sunset", 
-                   "midnight", "glacier", "autumn", "minimal"]
+THEMES_INDIVIDUAL = ["light", "dark", "synthwave", "living-water", "doves-wing"]
+THEMES_MINISTRY = ["light", "dark", "synthwave", "living-water", "doves-wing", \
+                   "celestial", "sacred"]
 THEMES_CHURCH = "all"  # All presets + custom designer
 
 TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
