@@ -20,7 +20,7 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.database import SessionLocal, engine
-from app.models import Base, Organization, User, Survey
+from app.models import Base, Organization, User, Survey, LogEntry
 
 
 # Spiritual gifts for score generation
@@ -59,6 +59,7 @@ DEMO_ORGS = [
         "name": "Grace Community Fellowship",
         "slug": "grace-community",
         "plan": "growth",
+        "branding": {"theme_preset": "theme-light", "primary_color": "#0f172a"},
         "members": [
             {"name": "Pastor David Chen", "email": "david.chen@gracecommunity.org", "role": "admin", 
              "top_gifts": ["TEACHING", "LEADERSHIP"], "secondary": ["WISDOM", "SHEPHERD"]},
@@ -80,6 +81,7 @@ DEMO_ORGS = [
         "name": "Harvest Point Church",
         "slug": "harvest-point",
         "plan": "enterprise",
+        "branding": {"theme_preset": "theme-dark", "primary_color": "#f59e0b"},
         "members": [
             {"name": "Rev. Angela Williams", "email": "angela.w@harvestpoint.church", "role": "admin",
              "top_gifts": ["LEADERSHIP", "ENCOURAGEMENT"], "secondary": ["TEACHING", "SHEPHERD"]},
@@ -101,6 +103,16 @@ DEMO_ORGS = [
              "top_gifts": ["GIVING", "SERVICE"], "secondary": ["HOSPITALITY", "MERCY"]},
             {"name": "Kevin Moore", "email": "kevin.m@harvestpoint.church", "role": "user",
              "top_gifts": ["ENCOURAGEMENT", "DISCERNMENT"], "secondary": ["WISDOM", "SHEPHERD"]},
+        ]
+    },
+    {
+        "name": "Neon Evangelion Ministry",
+        "slug": "neon-ministry",
+        "plan": "growth",
+        "branding": {"theme_preset": "theme-synthwave", "primary_color": "#ff2a6d", "accent_color": "#05d9e8"},
+        "members": [
+            {"name": "Tony Moses", "email": "tonym415@gmail.com", "role": "admin",
+             "top_gifts": ["APOSTLESHIP", "PROPHECY"], "secondary": ["TEACHING", "WISDOM"]}
         ]
     }
 ]
@@ -125,6 +137,7 @@ def seed_database():
                 name=org_data["name"],
                 slug=org_data["slug"],
                 plan=org_data["plan"],
+                branding=org_data.get("branding", {}),
                 is_active=True
             )
             db.add(org)
@@ -194,6 +207,13 @@ def clear_demo_data():
         for slug in demo_slugs:
             org = db.query(Organization).filter(Organization.slug == slug).first()
             if org:
+                # Get user IDs for this org
+                user_ids = [u.id for u in db.query(User.id).filter(User.org_id == org.id).all()]
+                
+                # Delete logs associated with these users
+                if user_ids:
+                    db.query(LogEntry).filter(LogEntry.user_id.in_(user_ids)).delete(synchronize_session=False)
+
                 # Delete surveys associated with this org
                 db.query(Survey).filter(Survey.org_id == org.id).delete()
                 # Delete users associated with this org

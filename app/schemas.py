@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
-from typing import Optional, Dict, Annotated
+from typing import Optional, Dict, Annotated, Any
 from datetime import datetime
 
 # Authentication schemas
@@ -105,6 +105,7 @@ class OrganizationCreate(BaseModel):
 class OrganizationUpdate(BaseModel):
     """Schema for updating an organization."""
     name: Optional[str] = Field(None, min_length=2, max_length=255)
+    branding: Optional[Dict[str, Any]] = Field(None, description="Visual branding configuration")
 
 
 class OrganizationResponse(BaseModel):
@@ -113,6 +114,7 @@ class OrganizationResponse(BaseModel):
     name: str = Field(..., description="Organization display name")
     slug: str = Field(..., description="URL-friendly identifier")
     plan: str = Field(..., description="Subscription plan (free, starter, growth, enterprise)")
+    branding: Optional[Dict[str, Any]] = Field({}, description="Visual branding configuration")
     is_active: bool = Field(..., description="Whether the organization is active")
     created_at: datetime = Field(..., description="When the organization was created")
     updated_at: datetime = Field(..., description="When the organization was last modified")

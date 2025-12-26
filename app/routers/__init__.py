@@ -139,8 +139,7 @@ async def dev_login_endpoint(
     request: schemas.LoginRequest, 
     response: Response,
     fastapi_request: Request,
-    db: Session = Depends(get_db),
-    csrf_protect: CsrfProtect = Depends()
+    db: Session = Depends(get_db)
 ):
     """
     Development login endpoint - bypasses magic link email for testing.
@@ -157,7 +156,8 @@ async def dev_login_endpoint(
     Returns:
         JWT access token
     """
-    await csrf_protect.validate_csrf(fastapi_request)
+    # CSRF validation skipped for dev tool convenience
+    # await csrf_protect.validate_csrf(fastapi_request)
     if settings.ENV == "production":
         raise HTTPException(
             status_code=403, 

@@ -15,6 +15,7 @@ class Organization(Base):
     slug = Column(String(100), unique=True, nullable=False, index=True)
     plan = Column(String(50), default="free", nullable=False)
     stripe_customer_id = Column(String(255), nullable=True)
+    branding = Column(JSON, default={}, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

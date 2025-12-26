@@ -83,15 +83,23 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
 async def handle_checkout_completed(event: dict, db: Session):
     """Handle successful checkout - activate subscription."""
+    import uuid as uuid_module
     session = event["data"]["object"]
     customer_id = session.get("customer")
     subscription_id = session.get("subscription")
     metadata = session.get("metadata", {})
-    org_id = metadata.get("org_id")
+    org_id_str = metadata.get("org_id")
     plan = metadata.get("plan", "starter")
     
-    if not org_id:
+    if not org_id_str:
         logger.warning("Checkout completed without org_id in metadata")
+        return
+    
+    # Convert string ID to UUID for database query
+    try:
+        org_id = uuid_module.UUID(org_id_str)
+    except ValueError:
+        logger.error(f"Invalid org_id format: {org_id_str}")
         return
     
     org = db.query(Organization).filter(Organization.id == org_id).first()
