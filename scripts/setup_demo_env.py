@@ -18,6 +18,7 @@ if __name__ == "__main__":
 from app.database import SessionLocal, engine
 from app.models import Base, Organization, User
 from app.services.entitlements import Plan
+from app.models import Survey
 
 def setup_demo_env():
     db = SessionLocal()
@@ -85,6 +86,52 @@ def setup_demo_env():
             print(f"✅ Migrated {migrated_count} users.")
         else:
             print("✅ No floating users found.")
+
+        # 4. Ensure Seed Users Exist
+        seed_users = [
+            {"email": "super@neon.com", "role": "admin", "org_id": neon_org.id, "desc": "Super Admin"},
+            {"email": "admin@grace.com", "role": "admin", "org_id": demo_org.id, "desc": "Demo Org Admin"},
+            {"email": "user@grace.com", "role": "user", "org_id": demo_org.id, "desc": "Demo Org Member"},
+        ]
+        
+        print("\n🌱 Seeding Test Users...")
+        for seed in seed_users:
+            u = db.query(User).filter(User.email == seed["email"]).first()
+            if not u:
+                u = User(
+                    email=seed["email"],
+                    role=seed["role"],
+                    org_id=seed["org_id"],
+                    created_at=datetime.utcnow()
+                )
+                db.add(u)
+                print(f"  ✅ Created {seed['desc']}: {seed['email']}")
+            else:
+                # Ensure correct state
+                u.role = seed["role"]
+                u.org_id = seed["org_id"]
+                print(f"  ✅ Verified {seed['desc']}: {seed['email']}")
+        
+        db.commit()
+        # Generate sample assessments for each seeded user
+        from random import randint
+        for seed in seed_users:
+            # Retrieve the user record (ensure we have the latest DB object)
+            user_obj = db.query(User).filter(User.email == seed["email"]).first()
+            if not user_obj:
+                continue
+            # Create between 1 and 5 assessments
+            for _ in range(randint(1, 5)):
+                assessment = Survey(
+                    user_id=user_obj.id,
+                    org_id=user_obj.org_id,
+                    answers={"question_1": "answer_a", "question_2": "answer_b"},
+                    scores={"overall": randint(50, 100)},
+                    assessment_version="1.0",
+                    created_at=datetime.utcnow()
+                )
+                db.add(assessment)
+        db.commit()
 
     except Exception as e:
         print(f"❌ Error: {e}")

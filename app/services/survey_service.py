@@ -241,8 +241,51 @@ class SurveyService:
             reverse=True
         ))
         
+        # Calculate active members (unique users who have taken an assessment)
+        active_members_count = len(set(s.user_id for s in surveys))
+        
+        # Calculate trends (group by month for the last 12 months)
+        from datetime import datetime, timedelta
+        
+        # Initialize last 12 months with 0
+        today = datetime.utcnow()
+        trends = {}
+        
+        # Generate last 12 months keys accurately
+        for i in range(12):
+            # Calculate target year and month
+            # effective_month is 1-based index (e.g. jan=1). 
+            # If today.month is 5 (May), i=0 -> 5. i=4 -> 1 (Jan). i=5 -> 0 (needs wrap to Dec prev year)
+            
+            target_month_idx = today.month - i - 1 # 0-indexed (0=Jan, 11=Dec)
+            
+            # Handle negative wrapping
+            year_offset = 0
+            while target_month_idx < 0:
+                target_month_idx += 12
+                year_offset -= 1
+            
+            target_year = today.year + year_offset
+            target_month = target_month_idx + 1 # Convert back to 1-based
+            
+            key = f"{target_year}-{target_month:02d}"
+            trends[key] = 0
+            
+        for survey in surveys:
+            month_key = survey.created_at.strftime("%Y-%m")
+            if month_key in trends:
+                trends[month_key] += 1
+            
+        # Convert trends to list of dicts for frontend
+        trends_list = [
+            {"date": k, "count": v} 
+            for k, v in sorted(trends.items())
+        ]
+        
         return {
             "total_assessments": total_assessments,
+            "active_members_count": active_members_count,
+            "assessments_trend": trends_list,
             "gift_averages": gift_averages,
             "top_gifts_distribution": sorted_distribution
         }

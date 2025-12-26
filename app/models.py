@@ -91,3 +91,20 @@ class LogEntry(Base):
     # Relationships
     user = relationship("User")
     organization = relationship("Organization")
+class AuditLog(Base):
+    """Minimal audit log for tracking actions.
+    Stores who performed an action, on which organization, the action type,
+    the target resource, and a timestamp.
+    """
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    actor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
+    action = Column(String(100), nullable=False)
+    resource = Column(String(255), nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    actor = relationship("User", backref="audit_logs")
+    organization = relationship("Organization", backref="audit_logs")

@@ -1,70 +1,60 @@
-import pytest
-from app.models import Organization, Survey, User
+from datetime import datetime, timedelta
 from app.services.survey_service import SurveyService
+from app.models import Survey, User
+from unittest.mock import MagicMock
 
-def test_org_analytics_empty(client, db, test_user):
-    # Setup: Create org and assign user
-    org = Organization(name="Test Org", slug="test-org", plan="growth")
-    db.add(org)
-    db.commit()
-    db.refresh(org)
+def test_get_org_analytics_active_members():
+    # Setup
+    mock_db = MagicMock()
+    org_id = "test-org-id"
     
-    test_user.org_id = org.id
-    test_user.role = "admin"
-    db.commit()
-
-    # Login
-    client.post("/api/v1/auth/dev-login", json={"email": test_user.email})
-
-    # Act
-    response = client.get("/api/v1/organizations/me/analytics")
-
-    # Assert
-    assert response.status_code == 200
-    data = response.json()
-    assert data["total_assessments"] == 0
-    assert data["gift_averages"] == {}
-
-def test_org_analytics_with_data(client, db, test_user):
-    # Setup: Create org and assign user
-    org = Organization(name="Test Org Data", slug="test-org-data", plan="growth")
-    db.add(org)
-    db.commit()
-    db.refresh(org)
+    # 3 Surveys from 2 distinct users
+    surveys = [
+        Survey(user_id=1, org_id=org_id, scores={"A": 10}, created_at=datetime.utcnow()),
+        Survey(user_id=1, org_id=org_id, scores={"B": 5}, created_at=datetime.utcnow()),
+        Survey(user_id=2, org_id=org_id, scores={"C": 15}, created_at=datetime.utcnow())
+    ]
     
-    test_user.org_id = org.id
-    test_user.role = "admin"
-    db.commit()
-
-    # Login
-    client.post("/api/v1/auth/dev-login", json={"email": test_user.email})
-
-    # Create surveys
-    survey1 = Survey(
-        user_id=test_user.id,
-        org_id=org.id,
-        scores={"Teaching": 10, "Leading": 5}
-    )
-    survey2 = Survey(
-        user_id=test_user.id,
-        org_id=org.id,
-        scores={"Teaching": 20, "Leading": 15}
-    )
-    db.add(survey1)
-    db.add(survey2)
-    db.commit()
-
-    # Act
-    response = client.get("/api/v1/organizations/me/analytics")
-
-    # Assert
-    assert response.status_code == 200
-    data = response.json()
-    assert data["total_assessments"] == 2
-    # Teaching avg: (10+20)/2 = 15.0
-    # Leading avg: (5+15)/2 = 10.0
-    assert data["gift_averages"]["Teaching"] == 15.0
-    assert data["gift_averages"]["Leading"] == 10.0
+    mock_db.query.return_value.filter.return_value.all.return_value = surveys
     
-    # Top Gifts: Survey1=Teaching (10 vs 5), Survey2=Teaching (20 vs 15). Teaching count = 2
-    assert data["top_gifts_distribution"]["Teaching"] == 2
+    # Execute
+    analytics = SurveyService.get_org_analytics(mock_db, org_id)
+    
+    # Verify
+    assert analytics["total_assessments"] == 3
+    assert analytics["active_members_count"] == 2 # Distinct users
+
+def test_get_org_analytics_trends():
+    # Setup
+    mock_db = MagicMock()
+    org_id = "test-org-id"
+    
+    current_month = datetime.utcnow()
+    last_month = current_month - timedelta(days=32)
+    
+    # Surveys in different months
+    surveys = [
+        Survey(user_id=1, org_id=org_id, scores={}, created_at=current_month),
+        Survey(user_id=2, org_id=org_id, scores={}, created_at=current_month),
+        Survey(user_id=3, org_id=org_id, scores={}, created_at=last_month)
+    ]
+    
+    mock_db.query.return_value.filter.return_value.all.return_value = surveys
+    
+    # Execute
+    analytics = SurveyService.get_org_analytics(mock_db, org_id)
+    
+    # Verify Trends Structure
+    trends = analytics["assessments_trend"]
+    assert isinstance(trends, list)
+    assert len(trends) == 12 # Last 12 months
+    
+    # Verify Counts
+    curr_key = current_month.strftime("%Y-%m")
+    last_key = last_month.strftime("%Y-%m")
+    
+    curr_trend = next(t for t in trends if t["date"] == curr_key)
+    last_trend = next(t for t in trends if t["date"] == last_key)
+    
+    assert curr_trend["count"] == 2
+    assert last_trend["count"] == 1

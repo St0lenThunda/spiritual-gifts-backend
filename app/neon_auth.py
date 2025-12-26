@@ -219,12 +219,30 @@ async def get_current_admin(
     Raises:
         HTTPException: If the user is not an admin
     """
+    allowed_emails = ["tonym415@gmail.com"]
+    allowed_org_slugs = ["neon-evangelion"]
+    
+    # Check 1: Must be an admin role
     if current_user.role != "admin":
-        logger.warning("unauthorized_admin_access", user_id=current_user.id, user_email=current_user.email)
+        logger.warning("unauthorized_admin_access", user_id=current_user.id, user_email=current_user.email, reason="role_not_admin")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrative privileges required"
         )
+        
+    # Check 2: Must be a Super Admin (specific email or specific org)
+    is_super_admin = current_user.email in allowed_emails
+    if not is_super_admin and current_user.organization:
+         if current_user.organization.slug in allowed_org_slugs:
+             is_super_admin = True
+             
+    if not is_super_admin:
+        logger.warning("unauthorized_super_admin_access", user_id=current_user.id, user_email=current_user.email, org_id=current_user.org_id)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="System Administrator privileges required"
+        )
+        
     return current_user
 
 # ============================================================================
