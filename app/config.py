@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # Stripe Configuration
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_STARTER: str = ""
+    STRIPE_PRICE_GROWTH: str = ""
+    STRIPE_PRICE_ENTERPRISE: str = ""
     STRIPE_PRICE_IDS: dict = {
         "starter": "",
         "growth": "",

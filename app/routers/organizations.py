@@ -210,3 +210,68 @@ async def get_organization_analytics(
     Available to all organization members, but typically used by admins.
     """
     return SurveyService.get_org_analytics(db, org_id=org.id)
+
+
+@router.get("/me/members/{member_id}/assessments")
+async def get_member_assessments(
+    member_id: int,
+    org: Organization = Depends(get_current_org),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get assessment history for a specific organization member.
+    Only admins can access member assessment data.
+    """
+    # Verify current user is an admin
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only organization admins can view member assessments"
+        )
+    
+    # Verify the member belongs to the same organization
+    member = db.query(User).filter(
+        User.id == member_id,
+        User.org_id == org.id
+    ).first()
+    
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member not found in this organization"
+        )
+    
+    # Get member's assessments
+    from ..models import Survey
+    assessments = db.query(Survey).filter(
+        Survey.user_id == member_id,
+        Survey.org_id == org.id
+    ).order_by(Survey.created_at.desc()).all()
+    
+    # Format response with top gift for each assessment
+    result = []
+    for assessment in assessments:
+        scores = assessment.scores or {}
+        top_gift = max(scores, key=scores.get) if scores else None
+        top_score = scores.get(top_gift, 0) if top_gift else 0
+        
+        result.append({
+            "id": assessment.id,
+            "created_at": assessment.created_at,
+            "scores": scores,
+            "top_gift": top_gift,
+            "top_score": top_score
+        })
+    
+    return {
+        "member": {
+            "id": member.id,
+            "email": member.email,
+            "role": member.role,
+            "created_at": member.created_at,
+            "last_login": member.last_login
+        },
+        "assessments": result,
+        "total_assessments": len(result)
+    }

@@ -219,6 +219,10 @@ app.include_router(admin.router, prefix="/api/v1")
 from .routers import organizations
 app.include_router(organizations.router, prefix="/api/v1")
 
+# Billing and Stripe webhook routes
+from .routers import billing
+app.include_router(billing.router, prefix="/api/v1")
+
 @app.get("/health")
 @app.get("/api/v1/health")
 async def health(check_external: bool = False):
