@@ -1,10 +1,11 @@
 """
 Test suite for user preferences API endpoints.
+Fixed to properly handle SQLAlchemy sessions.
 """
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from app.database import Base, get_db
 from app.main import app
 from app.models import User, Organization
@@ -18,24 +19,35 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 Base.metadata.create_all(bind=engine)
 
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
+# Global session for tests
+_test_session = None
 
-app.dependency_overrides[get_db] = override_get_db
+def get_test_db():
+    """Override for get_db that returns our test session."""
+    global _test_session
+    try:
+        yield _test_session
+    finally:
+        pass  # Don't close, we'll manage it in fixtures
+
 client = TestClient(app)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def db_session():
     """Create a fresh database session for each test."""
+    global _test_session
+    
     Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
-    yield db
-    db.close()
+    _test_session = TestingSessionLocal()
+    
+    # Override the dependency
+    app.dependency_overrides[get_db] = get_test_db
+    
+    yield _test_session
+    
+    _test_session.close()
+    app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=engine)
 
 
@@ -99,22 +111,27 @@ def admin_user(db_session, ministry_tier_org):
     return user
 
 
+def override_auth(user):
+    """Create an auth override that returns user from DB session."""
+    def _get_user():
+        # Return the user - it's already in the same session
+        return user
+    return _get_user
+
+
 class TestPreferencesGet:
     """Test GET /user/preferences endpoint."""
     
     def test_get_default_preferences(self, db_session, test_user):
         """User with no preferences gets defaults."""
-        # Mock authentication
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[get_current_user] = override_auth(test_user)
         
         response = client.get("/api/v1/user/preferences")
         assert response.status_code == 200
         data = response.json()
         assert data.get("locale") == "en"
         assert data.get("sync_across_orgs") == True
-        
-        app.dependency_overrides.pop(get_current_user)
     
     def test_get_preferences_with_global_prefs(self, db_session, test_user):
         """User with global preferences gets them back."""
@@ -122,15 +139,13 @@ class TestPreferencesGet:
         db_session.commit()
         
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[get_current_user] = override_auth(test_user)
         
         response = client.get("/api/v1/user/preferences")
         assert response.status_code == 200
         data = response.json()
         assert data.get("theme") == "dark"
         assert data.get("locale") == "es"
-        
-        app.dependency_overrides.pop(get_current_user)
     
     def test_get_preferences_org_specific(self, db_session, test_user, free_tier_org):
         """Organization-specific preferences override global."""
@@ -141,7 +156,7 @@ class TestPreferencesGet:
         db_session.commit()
         
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[get_current_user] = override_auth(test_user)
         
         # Get org-specific
         response = client.get(f"/api/v1/user/preferences?org_id={free_tier_org.id}")
@@ -152,8 +167,6 @@ class TestPreferencesGet:
         response = client.get("/api/v1/user/preferences")
         assert response.status_code == 200
         assert response.json().get("theme") == "light"
-        
-        app.dependency_overrides.pop(get_current_user)
 
 
 class TestPreferencesUpdate:
@@ -162,7 +175,7 @@ class TestPreferencesUpdate:
     def test_update_global_preferences(self, db_session, test_user):
         """User can update global preferences."""
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[get_current_user] = override_auth(test_user)
         
         response = client.patch("/api/v1/user/preferences", json={
             "theme": "dark",
@@ -177,13 +190,11 @@ class TestPreferencesUpdate:
         db_session.refresh(test_user)
         assert test_user.global_preferences.get("theme") == "dark"
         assert test_user.global_preferences.get("locale") == "fr"
-        
-        app.dependency_overrides.pop(get_current_user)
     
     def test_update_validates_theme_tier(self, db_session, test_user):
         """Theme selection is validated against tier."""
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[get_current_user] = override_auth(test_user)
         
         # Free tier user tries premium theme
         response = client.patch("/api/v1/user/preferences", json={
@@ -197,8 +208,6 @@ class TestPreferencesUpdate:
             "theme": "synthwave"  # Allowed in free tier
         })
         assert response.status_code == 200
-        
-        app.dependency_overrides.pop(get_current_user)
     
     def test_update_org_specific_when_sync_disabled(self, db_session, test_user, free_tier_org):
         """Org-specific preferences when sync is disabled."""
@@ -206,7 +215,7 @@ class TestPreferencesUpdate:
         db_session.commit()
         
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[get_current_user] = override_auth(test_user)
         
         response = client.patch(
             f"/api/v1/user/preferences?org_id={free_tier_org.id}",
@@ -218,8 +227,6 @@ class TestPreferencesUpdate:
         db_session.refresh(test_user)
         assert str(free_tier_org.id) in test_user.org_preferences
         assert test_user.org_preferences[str(free_tier_org.id)]["theme"] == "dark"
-        
-        app.dependency_overrides.pop(get_current_user)
 
 
 class TestPreferencesReset:
@@ -232,7 +239,7 @@ class TestPreferencesReset:
         db_session.commit()
         
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[get_current_user] = override_auth(test_user)
         
         response = client.post("/api/v1/user/preferences/reset")
         assert response.status_code == 200
@@ -241,8 +248,6 @@ class TestPreferencesReset:
         db_session.refresh(test_user)
         assert test_user.global_preferences == {}
         assert test_user.org_preferences == {}
-        
-        app.dependency_overrides.pop(get_current_user)
     
     def test_reset_org_specific_only(self, db_session, test_user, free_tier_org):
         """Reset can clear just org-specific preferences."""
@@ -253,7 +258,7 @@ class TestPreferencesReset:
         db_session.commit()
         
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[get_current_user] = override_auth(test_user)
         
         response = client.post(f"/api/v1/user/preferences/reset?org_id={free_tier_org.id}")
         assert response.status_code == 200
@@ -262,8 +267,6 @@ class TestPreferencesReset:
         db_session.refresh(test_user)
         assert test_user.global_preferences.get("theme") == "dark"
         assert str(free_tier_org.id) not in test_user.org_preferences
-        
-        app.dependency_overrides.pop(get_current_user)
 
 
 class TestThemeAnalytics:
@@ -272,13 +275,11 @@ class TestThemeAnalytics:
     def test_requires_admin_role(self, db_session, test_user):
         """Analytics requires admin role."""
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[get_current_user] = override_auth(test_user)
         
         response = client.get("/api/v1/admin/analytics/themes")
         assert response.status_code == 403
         assert "admin access" in response.json()["detail"].lower()
-        
-        app.dependency_overrides.pop(get_current_user)
     
     def test_requires_ministry_tier(self, db_session, free_tier_org):
         """Analytics requires Ministry or Church tier."""
@@ -289,16 +290,15 @@ class TestThemeAnalytics:
         )
         db_session.add(admin)
         db_session.commit()
+        db_session.refresh(admin)
         
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: admin
+        app.dependency_overrides[get_current_user] = override_auth(admin)
         
         response = client.get("/api/v1/admin/analytics/themes")
         assert response.status_code == 403
         assert "not available" in response.json()["detail"].lower()
         assert "ministry or church" in response.json()["detail"].lower()
-        
-        app.dependency_overrides.pop(get_current_user)
     
     def test_returns_distribution(self, db_session, admin_user, ministry_tier_org):
         """Analytics returns theme distribution."""
@@ -325,7 +325,7 @@ class TestThemeAnalytics:
         db_session.commit()
         
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: admin_user
+        app.dependency_overrides[get_current_user] = override_auth(admin_user)
         
         response = client.get("/api/v1/admin/analytics/themes")
         assert response.status_code == 200
@@ -339,8 +339,6 @@ class TestThemeAnalytics:
         assert dark_entry is not None
         assert dark_entry["count"] == 2
         assert dark_entry["percentage"] == 50.0  # 2 out of 4
-        
-        app.dependency_overrides.pop(get_current_user)
 
 
 class TestTierEntitlements:
@@ -351,36 +349,34 @@ class TestTierEntitlements:
         user = User(email="free@test.com", role="user", org_id=free_tier_org.id)
         db_session.add(user)
         db_session.commit()
+        db_session.refresh(user)
         
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: user
+        app.dependency_overrides[get_current_user] = override_auth(user)
         
         # Can select free tier themes
         for theme in THEMES_FREE:
             response = client.patch("/api/v1/user/preferences", json={"theme": theme})
-            assert response.status_code == 200, f"Failed for theme {theme}"
+            assert response.status_code == 200, f"Failed for theme {theme}: {response.json()}"
         
         # Cannot select premium themes
         response = client.patch("/api/v1/user/preferences", json={"theme": "ocean"})
         assert response.status_code == 403
-        
-        app.dependency_overrides.pop(get_current_user)
     
     def test_ministry_tier_themes(self, db_session, ministry_tier_org):
         """Ministry tier has access to 10 themes."""
         user = User(email="ministry@test.com", role="user", org_id=ministry_tier_org.id)
         db_session.add(user)
         db_session.commit()
+        db_session.refresh(user)
         
         from app.neon_auth import get_current_user
-        app.dependency_overrides[get_current_user] = lambda: user
+        app.dependency_overrides[get_current_user] = override_auth(user)
         
         # Can select ministry tier themes
         for theme in THEMES_MINISTRY:
             response = client.patch("/api/v1/user/preferences", json={"theme": theme})
-            assert response.status_code == 200, f"Failed for theme {theme}"
-        
-        app.dependency_overrides.pop(get_current_user)
+            assert response.status_code == 200, f"Failed for theme {theme}: {response.json()}"
 
 
 if __name__ == "__main__":

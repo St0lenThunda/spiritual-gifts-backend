@@ -102,19 +102,28 @@ async def reset_preferences(
     Reset preferences to defaults.
     If org_id provided, resets only that org's overrides.
     """
+    # Get user from database
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
     if org_id:
         # Reset org-specific preferences only
-        if current_user.org_preferences and org_id in current_user.org_preferences:
-            del current_user.org_preferences[org_id]
+        if user.org_preferences and org_id in user.org_preferences:
+            del user.org_preferences[org_id]
             # Mark as modified for SQLAlchemy
-            current_user.org_preferences = dict(current_user.org_preferences)
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(user, "org_preferences")
     else:
         # Reset all preferences
-        current_user.global_preferences = {}
-        current_user.org_preferences = {}
+        user.global_preferences = {}
+        user.org_preferences = {}
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(user, "global_preferences")
+        flag_modified(user, "org_preferences")
     
     db.commit()
-    logger.info("user_preferences_reset", user_id=current_user.id, org_id=org_id)
+    logger.info("user_preferences_reset", user_id=user.id, org_id=org_id)
     
     return {"message": "Preferences reset successfully"}
 
