@@ -43,7 +43,7 @@ def test_csrf_exception_handler(client, monkeypatch):
     monkeypatch.setattr(CsrfProtect, "validate_csrf", mock_validate_csrf_fail)
     
     # Now make a POST request that should fail CSRF validation
-    response = client.post("/api/v1/auth/dev-login", json={"email": "csrf@test.com"})
+    response = client.post("/api/v1/auth/send-link", json={"email": "csrf@test.com"})
     assert response.status_code == 403
     assert "CSRF" in response.json().get("detail", "")
 

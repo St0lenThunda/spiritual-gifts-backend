@@ -62,6 +62,42 @@ class SurveyService:
         return scores
 
     @staticmethod
+    def generate_discernment(scores: Dict[str, float]) -> Dict[str, Any]:
+        """
+        Generates a discernment explanation object based on scores.
+        Narrative indicators instead of raw math.
+        
+        Thresholds (assuming 8 questions per gift, max 40 per gift):
+        - High: >= 32 (80%)
+        - Moderate: >= 24 (60%)
+        """
+        high = []
+        moderate = []
+        
+        # Sort gifts by score descending
+        sorted_gifts = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        
+        for gift, score in sorted_gifts:
+            if score >= 32:
+                high.append(gift)
+            elif score >= 24:
+                moderate.append(gift)
+        
+        # Fallback: if none are >= 24, take top 3 as moderate
+        if not high and not moderate:
+            moderate = [item[0] for item in sorted_gifts[:3]]
+
+        context_notes = "These results indicate patterns of spiritual interest and effectiveness. " \
+                        "They are most helpful when discussed with ministry leaders who can help confirm " \
+                        "these gifts through shared experience and observation."
+
+        return {
+            "high_indicators": high,
+            "moderate_indicators": moderate,
+            "context_notes": context_notes
+        }
+
+    @staticmethod
     def create_survey(
         db: Session,
         user: User,
@@ -87,6 +123,8 @@ class SurveyService:
         if not scores:
             scores = SurveyService.calculate_scores(answers)
 
+        discernment = SurveyService.generate_discernment(scores)
+
         # Use org_id from parameter or from user's org
         survey_org_id = org_id or user.org_id
 
@@ -95,6 +133,7 @@ class SurveyService:
             neon_user_id=user.email,  # Keep for backward compatibility
             answers=answers,
             scores=scores,
+            discernment=discernment,
             org_id=survey_org_id,
             assessment_version=assessment_version
         )

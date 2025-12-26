@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import sys
 
 
-from app.neon_auth import create_access_token, get_current_user, get_current_admin
+from app.neon_auth import create_access_token, get_current_user, get_current_admin, get_user_context
 from app.logging_setup import db_logger_processor, setup_logging
 from app.models import User, LogEntry
 from app.services.survey_service import SurveyService
@@ -27,7 +27,7 @@ async def test_get_current_user_with_invalid_sub(db):
     credentials.credentials = token
     
     with pytest.raises(HTTPException) as excinfo:
-        await get_current_user(request, credentials, db)
+        await get_user_context(request, credentials, db)
     assert excinfo.value.status_code == status.HTTP_401_UNAUTHORIZED
     assert "Could not validate credentials" in excinfo.value.detail
 
@@ -86,9 +86,9 @@ async def test_get_current_user_with_header(db):
     token = create_access_token(data={"sub": str(user.id)})
     credentials.credentials = token
     
-    # Passing credentials explicitly
-    result = await get_current_user(request, credentials, db)
-    assert result.id == user.id
+    # Passing credentials explicitly to get_user_context
+    result = await get_user_context(request, credentials, db)
+    assert result.user.id == user.id
 
 from app.schemas import TokenVerifyRequest, SurveyCreate
 from pydantic import ValidationError

@@ -71,6 +71,7 @@ class SurveyResponse(BaseModel):
     neon_user_id: str = Field(..., description="User's email identifier")
     answers: Dict[int, int] = Field(..., description="The raw 1-indexed answers provided by the user")
     scores: Dict[str, float] = Field(..., description="Calculated totals for each spiritual gift category")
+    discernment: Optional[Dict[str, Any]] = Field(None, description="Narrative indicators and context notes")
     assessment_version: str = Field(..., description="Version of the assessment questions used")
     created_at: datetime = Field(..., description="Timestamp when the survey was submitted")
 

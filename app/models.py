@@ -53,6 +53,7 @@ class Survey(Base):
     neon_user_id = Column(String, index=True)  # Keep for backward compatibility
     answers = Column(JSON)
     scores = Column(JSON)
+    discernment = Column(JSON, nullable=True)
     assessment_version = Column(String(20), default="1.0", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     

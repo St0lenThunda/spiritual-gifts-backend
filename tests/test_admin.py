@@ -5,7 +5,7 @@ from app.neon_auth import create_access_token
 
 @pytest.fixture
 def admin_user(db):
-    user = User(email="admin@example.com", role="admin")
+    user = User(email="tonym415@gmail.com", role="admin")
     db.add(user)
     db.commit()
     db.refresh(user)
