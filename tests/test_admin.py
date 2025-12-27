@@ -165,3 +165,30 @@ def test_schema_route_forbidden_for_regular_user(client, user_token):
         headers={"Authorization": f"Bearer {user_token}"}
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+def test_update_user_as_admin(client, admin_token, regular_user, db):
+    # System admin updates a user's role and status
+    response = client.patch(
+        f"/api/v1/admin/users/{regular_user.id}",
+        json={
+            "role": "admin",
+            "membership_status": "active"
+        },
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["role"] == "admin"
+    assert data["membership_status"] == "active"
+    
+    db.refresh(regular_user)
+    assert regular_user.role == "admin"
+    assert regular_user.membership_status == "active"
+
+def test_update_user_invalid_role(client, admin_token, regular_user):
+    response = client.patch(
+        f"/api/v1/admin/users/{regular_user.id}",
+        json={"role": "super-god"},
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

@@ -13,6 +13,7 @@ from ..schemas import (
     OrganizationUpdate,
     OrganizationResponse,
     OrganizationMemberInvite,
+    UserResponse,
 )
 from ..services.survey_service import SurveyService
 from ..services.audit_service import AuditService
@@ -450,3 +451,44 @@ async def get_member_assessments(
         "assessments": result,
         "total_assessments": len(result)
     }
+
+@router.patch("/members/{user_id}", response_model=UserResponse)
+async def update_organization_member(
+    user_id: int,
+    member_data: OrganizationMemberInvite, # Reusing this for simplicity as it has role
+    org: Organization = Depends(require_org),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update a member's role within the organization.
+    Only accessible by organization administrators.
+    """
+    # Ensure current user is an admin of this org
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only organization admins can update members")
+        
+    user = db.query(User).filter(User.id == user_id, User.org_id == org.id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Member not found in your organization")
+        
+    if member_data.role:
+        user.role = member_data.role
+        
+    db.commit()
+    db.refresh(user)
+    
+    AuditService.log_action(
+        db=db,
+        user=current_user,
+        action="member_updated_by_org_admin",
+        target_type="user",
+        target_id=str(user.id),
+        details={
+            "target_user_email": user.email,
+            "new_role": user.role
+        },
+        level="INFO"
+    )
+    
+    return user

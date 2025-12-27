@@ -7,8 +7,9 @@ from typing import List
 
 from ..neon_auth import get_current_admin
 from ..database import get_db
-from ..models import LogEntry, User
+from ..models import LogEntry, User, Organization
 from .. import schemas
+from ..services.audit_service import AuditService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -120,6 +121,52 @@ async def list_all_users(
         "limit": limit,
         "pages": pages
     }
+
+@router.patch("/users/{user_id}", response_model=schemas.UserResponse)
+async def update_user(
+    user_id: int,
+    user_data: schemas.UserUpdate,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Update a user's role, organization, or membership status.
+    Only accessible by system administrators.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if user_data.role is not None:
+        user.role = user_data.role
+        
+    if user_data.org_id is not None:
+        # Verify organization exists
+        org = db.query(Organization).filter(Organization.id == user_data.org_id).first()
+        if not org:
+            raise HTTPException(status_code=404, detail="Organization not found")
+        user.org_id = user_data.org_id
+        
+    if user_data.membership_status is not None:
+        user.membership_status = user_data.membership_status
+        
+    db.commit()
+    db.refresh(user)
+    
+    AuditService.log_action(
+        db=db,
+        user=current_admin,
+        action="user_updated_by_admin",
+        target_type="user",
+        target_id=str(user.id),
+        details={
+            "target_user_email": user.email,
+            "updates": user_data.model_dump(exclude_unset=True)
+        },
+        level="INFO"
+    )
+    
+    return user
 
 @router.get("/schema", response_model=dict)
 async def get_db_schema(current_admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):

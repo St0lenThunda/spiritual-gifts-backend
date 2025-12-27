@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
-from typing import Optional, Dict, Annotated, Any, List
+from typing import Optional, List, Dict, Any, Annotated
+from uuid import UUID
 from datetime import datetime
 
 # Authentication schemas
@@ -35,6 +36,26 @@ class UserResponse(BaseModel):
     last_login: Optional[datetime] = Field(None, description="Timestamp of the most recent successful login")
 
     model_config = ConfigDict(from_attributes=True)
+
+class UserUpdate(BaseModel):
+    """Schema for updating a user (admins only)."""
+    role: Optional[str] = Field(None, description="User's role (user or admin)")
+    org_id: Optional[UUID] = Field(None, description="Organization ID affiliation")
+    membership_status: Optional[str] = Field(None, description="Status within the organization (pending or active)")
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ["user", "admin"]:
+            raise ValueError("Role must be 'user' or 'admin'")
+        return v
+
+    @field_validator("membership_status")
+    @classmethod
+    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ["pending", "active"]:
+            raise ValueError("Status must be 'pending' or 'active'")
+        return v
 
 # Survey schemas
 class SurveyCreate(BaseModel):
