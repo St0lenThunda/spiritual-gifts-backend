@@ -14,7 +14,7 @@
 		}
 	],
 	"settings": {
-		"i18n-ally.localesPaths": [
+		"i18n-ally.localesPaths": [			
 			"backend/data/locales",
 			"frontend/src/i18n",
 			"frontend/src/locales",
