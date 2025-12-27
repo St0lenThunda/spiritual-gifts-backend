@@ -42,6 +42,7 @@ class User(Base):
     
     # Multi-tenancy
     org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True, index=True)
+    membership_status = Column(String(50), default="active", nullable=False)  # pending, active
     
     # Relationships
     organization = relationship("Organization", back_populates="users")

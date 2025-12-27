@@ -201,6 +201,13 @@ async def require_org(context: UserContext = Depends(get_user_context)) -> Organ
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Organization is inactive"
         )
+    
+    if context.user.membership_status != "active":
+        logger.warning("access_denied", reason="membership_pending", user_id=context.user.id, org_id=str(context.organization.id))
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Organization membership is pending approval"
+        )
         
     return context.organization
 

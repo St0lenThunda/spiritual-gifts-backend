@@ -31,6 +31,7 @@ def mock_user():
     user.email = "test@example.com"
     user.role = "admin"
     user.org_id = None
+    user.membership_status = "active"
     return user
 
 
@@ -278,6 +279,7 @@ class TestAuthenticatedEndpoints:
         # Configure mock user as admin with org
         mock_user.org_id = mock_org.id
         mock_user.role = "admin"
+        mock_user.membership_status = "active"
         mock_org.is_active = True
         
         # Setup DB query mocks
@@ -286,6 +288,7 @@ class TestAuthenticatedEndpoints:
         mock_query.filter.return_value = mock_query
         mock_query.first.return_value = None  # Default: no existing record
         mock_query.all.return_value = [mock_user]  # For members list
+        mock_query.count.return_value = 1  # For member count checks
         
         # Override dependencies
         app.dependency_overrides[get_current_user] = lambda: mock_user

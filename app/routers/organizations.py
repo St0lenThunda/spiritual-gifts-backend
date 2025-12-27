@@ -52,6 +52,7 @@ async def create_organization(
     # Associate user with organization as admin
     current_user.org_id = org.id
     current_user.role = "admin"
+    current_user.membership_status = "active"
     
     db.commit()
     db.refresh(org)
@@ -223,6 +224,32 @@ async def check_slug_availability(
     }
 
 
+@router.get("/search", response_model=List[dict])
+async def search_organizations(
+    q: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Search for organizations by name or slug.
+    Returns a list of matching organizations (public info only).
+    """
+    if len(q) < 2:
+        return []
+        
+    orgs = db.query(Organization).filter(
+        (Organization.name.ilike(f"%{q}%")) | 
+        (Organization.slug.ilike(f"%{q}%"))
+    ).limit(10).all()
+    
+    return [
+        {
+            "name": org.name,
+            "slug": org.slug
+        }
+        for org in orgs
+    ]
+
+
 @router.get("/me/analytics")
 async def get_organization_analytics(
     org: Organization = Depends(require_org),
@@ -233,6 +260,131 @@ async def get_organization_analytics(
     Available to all organization members, but typically used by admins.
     """
     return SurveyService.get_org_analytics(db, org_id=org.id)
+
+
+@router.post("/join/{slug}", status_code=status.HTTP_202_ACCEPTED)
+async def join_organization(
+    slug: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Request to join an organization.
+    The user's status will be set to 'pending' until an admin approves.
+    """
+    # Check if user already has an org
+    if current_user.org_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You are already associated with an organization"
+        )
+    
+    # Find org
+    org = db.query(Organization).filter(Organization.slug == slug.lower()).first()
+    if not org:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Organization with slug '{slug}' not found"
+        )
+    
+    # Associate user
+    current_user.org_id = org.id
+    current_user.membership_status = "pending"
+    current_user.role = "user"
+    
+    db.commit()
+    
+    AuditService.log_action(
+        db=db,
+        user=current_user,
+        action="join_request",
+        target_type="organization",
+        target_id=str(org.id),
+        details={"slug": slug}
+    )
+    
+    return {"message": f"Join request sent to {org.name}", "status": "pending"}
+
+
+@router.post("/members/{user_id}/approve", status_code=status.HTTP_200_OK)
+async def approve_member(
+    user_id: int,
+    org: Organization = Depends(require_org),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Approve a pending member."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can approve members")
+    
+    user = db.query(User).filter(User.id == user_id, User.org_id == org.id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found in this organization")
+    
+    if user.membership_status == "active":
+        return {"message": "User is already active"}
+    
+    # Tier Check again during approval
+    features = get_plan_features(org.plan)
+    max_users = features.get(FEATURE_USERS, 10)
+    current_member_count = db.query(User).filter(User.org_id == org.id, User.membership_status == "active").count()
+    
+    if current_member_count >= max_users:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Tier limit of {max_users} active members reached. Please upgrade."
+        )
+
+    user.membership_status = "active"
+    db.commit()
+    
+    AuditService.log_action(
+        db=db,
+        user=current_user,
+        action="approve_member",
+        target_type="user",
+        target_id=str(user.id),
+        details={"email": user.email}
+    )
+    
+    return {"message": f"User {user.email} approved"}
+
+
+@router.post("/members/{user_id}/reject", status_code=status.HTTP_200_OK)
+async def reject_member(
+    user_id: int,
+    org: Organization = Depends(require_org),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Reject a pending member or remove an active member."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can manage members")
+    
+    user = db.query(User).filter(User.id == user_id, User.org_id == org.id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found in this organization")
+    
+    # If rejecting their own request or removing self (handled by separate leave logic usually, but here for admin)
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot reject/remove yourself")
+
+    user.org_id = None
+    user.membership_status = "active" # Reset for their next attempt/standalone use
+    user.role = "user"
+    
+    db.commit()
+    
+    AuditService.log_action(
+        db=db,
+        user=current_user,
+        action="reject_member",
+        target_type="user",
+        target_id=str(user.id),
+        details={"email": user.email}
+    )
+    
+    return {"message": f"User {user.email} removed/rejected"}
 
 
 @router.get("/me/members/{member_id}/assessments")
