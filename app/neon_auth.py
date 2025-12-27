@@ -252,6 +252,50 @@ async def get_current_admin(
         
     return current_user
 
+async def get_org_admin(
+    context: UserContext = Depends(get_user_context)
+) -> User:
+    """
+    Dependency that verifies if the current user is an organization admin.
+    This allows org admins to access admin features scoped to their organization.
+    
+    Returns:
+        User object if the user is an org admin or super admin
+        
+    Raises:
+        HTTPException: If the user is not an admin
+    """
+    user = context.user
+    
+    # Super admins always have access
+    allowed_emails = ["tonym415@gmail.com"]
+    allowed_org_slugs = ["neon-evangelion"]
+    
+    is_super_admin = user.email in allowed_emails
+    if not is_super_admin and user.organization:
+        if user.organization.slug in allowed_org_slugs:
+            is_super_admin = True
+    
+    if is_super_admin:
+        return user
+    
+    # Check if user is an org admin
+    if user.role != "admin":
+        logger.warning("unauthorized_admin_access", user_id=user.id, user_email=user.email, reason="role_not_admin")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrative privileges required"
+        )
+    
+    # Org admin must belong to an organization
+    if not context.organization:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Organization membership required for admin access"
+        )
+    
+    return user
+
 # ============================================================================
 # Neon Auth Magic Link Functions
 # ============================================================================

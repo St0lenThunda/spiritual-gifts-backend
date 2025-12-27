@@ -224,6 +224,9 @@ origins = [
     "http://localhost:5174",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
+    "http://0.0.0.0:5173",
+    "http://0.0.0.0:5174",
+    "http://172.28.145.94:5173",  # WSL2 network IP
     "https://sga-v1.netlify.app",
     "https://spiritual-gifts-backend-d82f.onrender.com"
 ]

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from ..neon_auth import get_current_admin
+from ..neon_auth import get_current_admin, get_org_admin, UserContext, get_user_context
 from ..database import get_db
 from ..models import LogEntry, User, Organization
 from .. import schemas
@@ -22,7 +22,8 @@ async def get_system_logs(
     order: str = "desc",
     page: int = 1,
     limit: int = 20,
-    current_admin: User = Depends(get_current_admin),
+    context: UserContext = Depends(get_user_context),
+    current_admin: User = Depends(get_org_admin),
     db: Session = Depends(get_db)
 ):
     """
@@ -30,6 +31,20 @@ async def get_system_logs(
     Only accessible by administrators.
     """
     query = db.query(LogEntry)
+    
+    # Org admins can only see logs from their organization's users
+    # Super admins see all logs
+    allowed_emails = ["tonym415@gmail.com"]
+    allowed_org_slugs = ["neon-evangelion"]
+    is_super_admin = current_admin.email in allowed_emails
+    if not is_super_admin and current_admin.organization:
+        if current_admin.organization.slug in allowed_org_slugs:
+            is_super_admin = True
+    
+    if not is_super_admin and context.organization:
+        # Get emails of users in this org
+        org_user_emails = [u.email for u in db.query(User).filter(User.org_id == context.organization.id).all()]
+        query = query.filter(LogEntry.user_email.in_(org_user_emails))
     
     # Filtering
     if level:
@@ -85,7 +100,8 @@ async def list_all_users(
     order: str = "asc",
     page: int = 1,
     limit: int = 20,
-    current_admin: User = Depends(get_current_admin),
+    context: UserContext = Depends(get_user_context),
+    current_admin: User = Depends(get_org_admin),
     db: Session = Depends(get_db)
 ):
     """
@@ -93,6 +109,18 @@ async def list_all_users(
     Only accessible by administrators.
     """
     query = db.query(User)
+    
+    # Org admins can only see users from their organization
+    # Super admins see all users
+    allowed_emails = ["tonym415@gmail.com"]
+    allowed_org_slugs = ["neon-evangelion"]
+    is_super_admin = current_admin.email in allowed_emails
+    if not is_super_admin and current_admin.organization:
+        if current_admin.organization.slug in allowed_org_slugs:
+            is_super_admin = True
+    
+    if not is_super_admin and context.organization:
+        query = query.filter(User.org_id == context.organization.id)
     
     # Filtering
     if role:
