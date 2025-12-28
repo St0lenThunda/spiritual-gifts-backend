@@ -1,6 +1,6 @@
 import pytest
 from app.models import LogEntry, User
-from app.neon_auth import get_current_admin
+from app.neon_auth import get_current_admin, get_org_admin, get_user_context, UserContext
 
 @pytest.fixture
 def admin_user(db):
@@ -15,6 +15,10 @@ def test_get_logs_pagination(client, db, admin_user):
     # Override get_current_admin dependency
     from app.main import app
     app.dependency_overrides[get_current_admin] = lambda: admin_user
+    app.dependency_overrides[get_org_admin] = lambda: admin_user
+    app.dependency_overrides[get_user_context] = lambda: UserContext(
+        user=admin_user, organization=None, role="admin", permissions=[]
+    )
 
     # Seed logs
     logs = []
@@ -54,6 +58,10 @@ def test_get_users_pagination(client, db, admin_user):
     # Override get_current_admin dependency
     from app.main import app
     app.dependency_overrides[get_current_admin] = lambda: admin_user
+    app.dependency_overrides[get_org_admin] = lambda: admin_user
+    app.dependency_overrides[get_user_context] = lambda: UserContext(
+        user=admin_user, organization=None, role="admin", permissions=[]
+    )
 
     # Seed users (1 admin already exists)
     for i in range(25):
