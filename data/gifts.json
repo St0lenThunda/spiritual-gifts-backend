@@ -39,21 +39,8 @@
       "Protective"
     ]
   },
-  "Evangelism": {
-        "name": "Evangelism",
-    "definition": "The ability to communicate the gospel effectively so that unbelievers become disciples of Jesus.",
-    "scriptures": [
-      "Eph. 4:11"
-    ],
-    "traits": [
-      "Persuasive",
-      "Sociable",
-      "Passionate",
-      "Bold"
-    ]
-  },
-  "Exhortation": {
-    "name": "Exhortation",
+  "Encouragement": {
+    "name": "Encouragement",
     "definition": "The ability to encourage, comfort, and challenge others to grow in their faith and overcome struggles.",
     "scriptures": [
       "Rom. 12:8"
@@ -63,6 +50,19 @@
       "Motivating",
       "Positive",
       "Counseling"
+    ]
+  },
+  "Evangelism": {
+    "name": "Evangelism",
+    "definition": "The ability to communicate the gospel effectively so that unbelievers become disciples of Jesus.",
+    "scriptures": [
+      "Eph. 4:11"
+    ],
+    "traits": [
+      "Persuasive",
+      "Sociable",
+      "Passionate",
+      "Bold"
     ]
   },
   "Faith": {
@@ -105,6 +105,19 @@
       "Restorative"
     ]
   },
+  "Helps": {
+    "name": "Helps",
+    "definition": "The ability to invest the talents one has in the life and ministry of other members of the body, thus enabling those others to increase the effectiveness of their own spiritual gifts.",
+    "scriptures": [
+      "1 Cor. 12:28"
+    ],
+    "traits": [
+      "Supportive",
+      "Reliable",
+      "Servant-hearted",
+      "Available"
+    ]
+  },
   "Hospitality": {
     "name": "Hospitality",
     "definition": "The ability to welcome and care for guests and strangers with a warm and generous spirit.",
@@ -116,6 +129,20 @@
       "Friendly",
       "Gracious",
       "Inviting"
+    ]
+  },
+  "Intercession": {
+    "name": "Intercession",
+    "definition": "The ability to pray faithfully for others and identify specific answerable prayer needs.",
+    "scriptures": [
+      "Rom. 8:26-27",
+      "Col. 4:12"
+    ],
+    "traits": [
+      "Prayer-oriented",
+      "Burden-bearer",
+      "Spiritual",
+      "Persistent"
     ]
   },
   "Knowledge": {
@@ -171,19 +198,6 @@
       "Expectant"
     ]
   },
-  "Pastor/Shepherd": {
-    "name": "Pastor/Shepherd",
-    "definition": "The ability to assume a long-term personal responsibility for the spiritual welfare of a group of believers.",
-    "scriptures": [
-      "Eph. 4:11"
-    ],
-    "traits": [
-      "Nurturing",
-      "Protective",
-      "Guiding",
-      "Relational"
-    ]
-  },
   "Prophecy": {
     "name": "Prophecy",
     "definition": "The ability to proclaim and apply God's truth in a relevant manner for understanding, correction, or edification.",
@@ -200,18 +214,30 @@
       "Convicting"
     ]
   },
-  "Service/Helps": {
-    "name": "Service/Helps",
+  "Service": {
+    "name": "Service",
     "definition": "The ability to identify unmet needs involved in a task related to God's work, and to make use of available resources to meet those needs and help accomplish the desired results.",
     "scriptures": [
-      "Rom. 12:7",
-      "1 Cor. 12:28"
+      "Rom. 12:7"
     ],
     "traits": [
       "Practical",
       "Helpful",
       "Reliable",
       "Supportive"
+    ]
+  },
+  "Shepherd": {
+    "name": "Shepherd",
+    "definition": "The ability to assume a long-term personal responsibility for the spiritual welfare of a group of believers.",
+    "scriptures": [
+      "Eph. 4:11"
+    ],
+    "traits": [
+      "Nurturing",
+      "Protective",
+      "Guiding",
+      "Relational"
     ]
   },
   "Teaching": {
@@ -240,18 +266,6 @@
       "Spiritual",
       "Expressive",
       "Prayer-oriented"
-    ]
-  },
-  "Interpretation": {
-    "name": "Interpretation",
-    "definition": "The ability to make known in the vernacular the message of one who speaks in tongues.",
-    "scriptures": [
-      "1 Cor. 12:10"
-    ],
-    "traits": [
-      "Discerning",
-      "Spiritual",
-      "Articulate"
     ]
   },
   "Wisdom": {
