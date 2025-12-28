@@ -40,7 +40,7 @@
     ]
   },
   "Evangelism": {
-        "name": "Evangelism",
+    "name": "Evangelism",
     "definition": "The ability to communicate the gospel effectively so that unbelievers become disciples of Jesus.",
     "scriptures": [
       "Eph. 4:11"
@@ -266,5 +266,15 @@
       "Sensible",
       "Problem-solver"
     ]
+  },
+  "org": {
+    "messages": {
+      "no_org": "org.messages.no_org"
+    }
+  },
+  "admin": {
+    "table": {
+      "timestamp": "admin.table.timestamp"
+    }
   }
 }

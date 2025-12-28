@@ -129,21 +129,20 @@ def seed_database():
             # Check if org already exists
             existing_org = db.query(Organization).filter(Organization.slug == org_data["slug"]).first()
             if existing_org:
-                print(f"⚠️  Organization '{org_data['name']}' already exists, skipping...")
-                continue
-            
-            # Create organization
-            org = Organization(
-                name=org_data["name"],
-                slug=org_data["slug"],
-                plan=org_data["plan"],
-                branding=org_data.get("branding", {}),
-                is_active=True
-            )
-            db.add(org)
-            db.flush()  # Get the org ID
-            
-            print(f"✅ Created organization: {org.name} ({org.plan} plan)")
+                print(f"⚠️  Organization '{org_data['name']}' already exists, checking members...")
+                org = existing_org
+            else:
+                # Create organization
+                org = Organization(
+                    name=org_data["name"],
+                    slug=org_data["slug"],
+                    plan=org_data["plan"],
+                    branding=org_data.get("branding", {}),
+                    is_active=True
+                )
+                db.add(org)
+                db.flush()  # Get the org ID
+                print(f"✅ Created organization: {org.name} ({org.plan} plan)")
             
             for member_data in org_data["members"]:
                 # Check if user already exists

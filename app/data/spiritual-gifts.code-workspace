@@ -26,6 +26,7 @@
 			"frontend/src/locales",
 			"backend/venv/lib/python3.10/site-packages/pendulum/locales",
 			"backend/venv/lib64/python3.10/site-packages/pendulum/locales"
-		]
+		],
+		"i18n-ally.keystyle": "nested"
 	}
 }

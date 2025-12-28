@@ -19,6 +19,9 @@ FEATURE_SUPPORT_LEVEL = "support_level"
 FEATURE_AVAILABLE_THEMES = "available_themes"
 FEATURE_THEME_ANALYTICS = "theme_analytics"
 FEATURE_CUSTOM_ORG_THEMING = "custom_org_theming"
+FEATURE_ANALYTICS = "analytics"
+FEATURE_BRANDING = "branding"
+FEATURE_MANAGE_SUBSCRIPTION = "manage_subscription"
 
 # Support Levels
 SUPPORT_NONE = "none"
@@ -44,7 +47,10 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_SUPPORT_LEVEL: SUPPORT_NONE,
         FEATURE_AVAILABLE_THEMES: THEMES_FREE,
         FEATURE_THEME_ANALYTICS: False,
-        FEATURE_CUSTOM_ORG_THEMING: False
+        FEATURE_CUSTOM_ORG_THEMING: False,
+        FEATURE_ANALYTICS: False,
+        FEATURE_BRANDING: False,
+        FEATURE_MANAGE_SUBSCRIPTION: False
     },
     Plan.INDIVIDUAL: {
         FEATURE_USERS: 50,
@@ -57,7 +63,10 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_SUPPORT_LEVEL: SUPPORT_EMAIL,
         FEATURE_AVAILABLE_THEMES: THEMES_INDIVIDUAL,
         FEATURE_THEME_ANALYTICS: False,
-        FEATURE_CUSTOM_ORG_THEMING: False
+        FEATURE_CUSTOM_ORG_THEMING: False,
+        FEATURE_ANALYTICS: False,
+        FEATURE_BRANDING: False,
+        FEATURE_MANAGE_SUBSCRIPTION: True
     },
     Plan.MINISTRY: {
         FEATURE_USERS: 100,
@@ -70,7 +79,10 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_SUPPORT_LEVEL: SUPPORT_PRIORITY,
         FEATURE_AVAILABLE_THEMES: THEMES_MINISTRY,
         FEATURE_THEME_ANALYTICS: True,
-        FEATURE_CUSTOM_ORG_THEMING: False
+        FEATURE_CUSTOM_ORG_THEMING: False,
+        FEATURE_ANALYTICS: True,
+        FEATURE_BRANDING: True,
+        FEATURE_MANAGE_SUBSCRIPTION: True
     },
     Plan.CHURCH: {
         FEATURE_USERS: float('inf'),
@@ -83,16 +95,32 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_SUPPORT_LEVEL: SUPPORT_PRIORITY,
         FEATURE_AVAILABLE_THEMES: THEMES_CHURCH,
         FEATURE_THEME_ANALYTICS: True,
-        FEATURE_CUSTOM_ORG_THEMING: True
+        FEATURE_CUSTOM_ORG_THEMING: True,
+        FEATURE_ANALYTICS: True,
+        FEATURE_BRANDING: True,
+        FEATURE_MANAGE_SUBSCRIPTION: True
     }
+}
+
+LEGACY_PLAN_MAPPING = {
+    "starter": Plan.INDIVIDUAL,
+    "growth": Plan.MINISTRY,
+    "enterprise": Plan.CHURCH
 }
 
 def get_plan_features(plan_name: str) -> Dict[str, Any]:
     """Retrieve features for a given plan, defaulting to FREE if unknown."""
-    try:
-        plan = Plan(plan_name.lower())
-    except ValueError:
-        plan = Plan.FREE
+    normalized_name = plan_name.lower()
+    
+    # Check legacy mapping first
+    if normalized_name in LEGACY_PLAN_MAPPING:
+        plan = LEGACY_PLAN_MAPPING[normalized_name]
+    else:
+        try:
+            plan = Plan(normalized_name)
+        except ValueError:
+            plan = Plan.FREE
+            
     return TIER_FEATURES[plan]
 
 def resolve_limit(plan_name: str, feature: str) -> Any:
