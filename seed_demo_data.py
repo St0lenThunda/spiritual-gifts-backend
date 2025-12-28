@@ -59,7 +59,7 @@ DEMO_ORGS = [
         "name": "Grace Community Fellowship",
         "slug": "grace-community",
         "plan": "ministry",
-        "branding": {"theme_preset": "theme-light", "primary_color": "#0f172a"},
+        "branding": {"theme_preset": "theme-dark", "primary_color": "#0f172a"},
         "members": [
             {"name": "Pastor David Chen", "email": "david.chen@gracecommunity.org", "role": "admin", 
              "top_gifts": ["TEACHING", "LEADERSHIP"], "secondary": ["WISDOM", "SHEPHERD"]},
@@ -210,13 +210,14 @@ def clear_demo_data():
                 user_ids = [u.id for u in db.query(User.id).filter(User.org_id == org.id).all()]
                 
                 # Delete logs associated with these users
+                # Delete logs associated with these users
                 if user_ids:
                     db.query(LogEntry).filter(LogEntry.user_id.in_(user_ids)).delete(synchronize_session=False)
+                    # Delete all surveys associated with these users to avoid FK violations
+                    db.query(Survey).filter(Survey.user_id.in_(user_ids)).delete(synchronize_session=False)
 
-                # Delete surveys associated with this org
-                db.query(Survey).filter(Survey.org_id == org.id).delete()
                 # Delete users associated with this org
-                db.query(User).filter(User.org_id == org.id).delete()
+                db.query(User).filter(User.org_id == org.id).delete(synchronize_session=False)
                 # Delete the org
                 db.delete(org)
                 print(f"🗑️  Deleted organization: {org.name}")
