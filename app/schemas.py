@@ -186,6 +186,7 @@ class OrganizationMemberInvite(BaseModel):
 class PreferenceUpdate(BaseModel):
     """Schema for updating user preferences."""
     theme: Optional[str] = Field(None, description="Theme preference ID")
+    theme_sync: Optional[bool] = Field(None, description="Whether to subscribe to organization theme updates")
     locale: Optional[str] = Field(None, description="Preferred language code (en, es, fr, ru)")
     sync_across_orgs: Optional[bool] = Field(None, description="Whether to sync preferences across organizations")
     notifications: Optional[Dict[str, bool]] = Field(None, description="Notification preferences")
@@ -195,6 +196,7 @@ class PreferenceUpdate(BaseModel):
 class UserPreferences(BaseModel):
     """Schema for user preferences response."""
     theme: Optional[str] = None
+    theme_sync: bool = True
     locale: str = "en"
     sync_across_orgs: bool = True
     notifications: Dict[str, bool] = {"email": True, "toast": True}

@@ -110,7 +110,10 @@ LEGACY_PLAN_MAPPING = {
 
 def get_plan_features(plan_name: str) -> Dict[str, Any]:
     """Retrieve features for a given plan, defaulting to FREE if unknown."""
-    normalized_name = plan_name.lower()
+    if not plan_name:
+        return TIER_FEATURES[Plan.FREE]
+
+    normalized_name = str(plan_name).lower()
     
     # Check legacy mapping first
     if normalized_name in LEGACY_PLAN_MAPPING:

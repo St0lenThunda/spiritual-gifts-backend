@@ -76,9 +76,26 @@ async def create_organization(
 
 @router.get("/me", response_model=OrganizationResponse)
 async def get_my_organization(
-    org: Organization = Depends(require_org)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Get the current user's organization."""
+    """
+    Get the current user's organization.
+    Allowed for pending members too so they can see what they applied to.
+    """
+    if not current_user.org_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User is not associated with any organization"
+        )
+        
+    org = db.query(Organization).filter(Organization.id == current_user.org_id).first()
+    if not org:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Organization not found"
+        )
+
     response_org = OrganizationResponse.model_validate(org)
     response_org.entitlements = get_plan_features(org.plan)
     return response_org
@@ -130,19 +147,47 @@ async def list_organization_members(
     org: Organization = Depends(require_org),
     db: Session = Depends(get_db)
 ):
-    """List all members of the current organization."""
+    """List all members of the current organization with basic stats."""
     members = db.query(User).filter(User.org_id == org.id).all()
     
-    return [
-        {
+    # Pre-fetch assessments for this org to avoid N+1
+    from ..models import Survey
+    org_surveys = db.query(Survey).filter(
+        Survey.org_id == org.id
+    ).order_by(Survey.created_at.desc()).all()
+    
+    # Map user_id -> list of surveys
+    user_surveys = {}
+    for survey in org_surveys:
+        if survey.user_id not in user_surveys:
+            user_surveys[survey.user_id] = []
+        user_surveys[survey.user_id].append(survey)
+    
+    result = []
+    for m in members:
+        member_surveys = user_surveys.get(m.id, [])
+        assessment_count = len(member_surveys)
+        
+        top_gift = None
+        if member_surveys:
+            # Surveys are already ordered by desc date, so first is latest
+            latest_survey = member_surveys[0]
+            scores = latest_survey.scores or {}
+            if scores:
+                top_gift = max(scores, key=scores.get)
+        
+        result.append({
             "id": m.id,
             "email": m.email,
             "role": m.role,
+            "membership_status": m.membership_status,
             "created_at": m.created_at,
-            "last_login": m.last_login
-        }
-        for m in members
-    ]
+            "last_login": m.last_login,
+            "assessment_count": assessment_count,
+            "top_gift": top_gift
+        })
+        
+    return result
 
 
 @router.post("/me/invite", status_code=status.HTTP_202_ACCEPTED)

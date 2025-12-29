@@ -42,9 +42,8 @@ async def get_system_logs(
             is_super_admin = True
     
     if not is_super_admin and context.organization:
-        # Get emails of users in this org
-        org_user_emails = [u.email for u in db.query(User).filter(User.org_id == context.organization.id).all()]
-        query = query.filter(LogEntry.user_email.in_(org_user_emails))
+        # Filter logs by organization ID
+        query = query.filter(LogEntry.org_id == context.organization.id)
     
     # Filtering
     if level:
