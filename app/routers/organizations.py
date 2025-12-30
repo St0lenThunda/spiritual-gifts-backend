@@ -150,10 +150,15 @@ async def list_organization_members(
     """List all members of the current organization with basic stats."""
     members = db.query(User).filter(User.org_id == org.id).all()
     
-    # Pre-fetch assessments for this org to avoid N+1
+    # Pre-fetch assessments for this org members to avoid N+1
     from ..models import Survey
+    
+    member_ids = [m.id for m in members]
+    
+    # improved query: fetch surveys for these users regardless of org_id
+    # This ensures historical/standalone assessments are included
     org_surveys = db.query(Survey).filter(
-        Survey.org_id == org.id
+        Survey.user_id.in_(member_ids)
     ).order_by(Survey.created_at.desc()).all()
     
     # Map user_id -> list of surveys
