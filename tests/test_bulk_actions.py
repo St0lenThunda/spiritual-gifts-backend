@@ -1,5 +1,6 @@
 import pytest
 import uuid
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -129,3 +130,27 @@ class TestBulkActions:
 
         assert response.status_code == 403
         assert "limit reached" in response.json()["detail"].lower()
+
+    def test_update_member_role_success(self, mock_admin, mock_org, mock_db):
+        user2 = MagicMock(spec=User)
+        user2.id = 2
+        user2.org_id = mock_org.id
+        user2.role = "user"
+        user2.email = "user2@example.com"
+        user2.membership_status = "active"
+        user2.created_at = datetime.utcnow()
+        user2.last_login = None
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.first.return_value = user2
+
+        response = client.patch(
+            "/api/v1/organizations/members/2",
+            json={"role": "admin"}
+        )
+
+        assert response.status_code == 200
+        assert user2.role == "admin"
+        assert mock_db.commit.called

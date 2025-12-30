@@ -121,13 +121,15 @@ async def verify_magic_link(
     access_token = create_access_token(data={"sub": str(user.id), "email": user.email, "role": user.role})
     
     # Set HttpOnly cookie
+    is_dev = settings.ENV == "development"
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=fastapi_request.url.scheme == "https",
+        secure=False if is_dev else (fastapi_request.url.scheme == "https"),
         samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/"
     )
     
     logger.info("magic_link_verified", user_id=user.id, user_email=user.email)
@@ -168,13 +170,15 @@ async def dev_login_endpoint(
     result = await dev_login(request.email, "dev-password", db)
     
     # Set HttpOnly cookie
+    is_dev = settings.ENV == "development"
     response.set_cookie(
         key="access_token",
         value=result["access_token"],
         httponly=True,
-        secure=fastapi_request.url.scheme == "https",
+        secure=False if is_dev else (fastapi_request.url.scheme == "https"),
         samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/"
     )
     
     logger.info("dev_login_successful", user_email=request.email)
@@ -191,7 +195,6 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     Returns:
         User information
     """
-    print(f"!!! BACKEND DEBUG: User={current_user.email} Role={current_user.role} !!!")
     logger.info("fetch_user_info", user_id=current_user.id, user_email=current_user.email, user_role=current_user.role)
     return current_user
 
@@ -213,10 +216,12 @@ async def logout(
         Success message
     """
     await csrf_protect.validate_csrf(request)
+    is_dev = settings.ENV == "development"
     response.delete_cookie(
         key="access_token",
+        path="/",
         httponly=True,
-        secure=request.url.scheme == "https",
+        secure=False if is_dev else (request.url.scheme == "https"),
         samesite="lax",
     )
     logger.info("user_logged_out")

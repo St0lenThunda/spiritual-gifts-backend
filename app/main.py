@@ -142,7 +142,8 @@ async def logging_middleware(request, call_next):
     
     # Set ID for structlog in all subsequent logs for this request
     import structlog
-    structlog.contextvars.bind_contextvars(request_id=request_id)
+    origin = request.headers.get("Origin", "No-Origin")
+    structlog.contextvars.bind_contextvars(request_id=request_id, origin=origin)
     
     # user_id and user_email are set in the auth dependency (neon_auth.py)
     
@@ -226,10 +227,22 @@ origins = [
     "http://127.0.0.1:5174",
     "http://0.0.0.0:5173",
     "http://0.0.0.0:5174",
-    "http://172.28.145.94:5173",  # WSL2 network IP
     "https://sga-v1.netlify.app",
     "https://spiritual-gifts-backend-d82f.onrender.com"
 ]
+
+# Add WSL/Network IPs dynamically in development
+if settings.ENV == "development":
+    # Common WSL2/Docker network ranges
+    for i in range(16, 32):
+        origins.append(f"http://172.{i}.144.1:5173")
+        origins.append(f"http://172.{i}.0.1:5173")
+    # Add the specific one from logs if not already there
+    origins.append("http://172.28.144.1:5173")
+    origins.append("http://172.28.144.1:5174")
+    # Broaden to more common ranges
+    origins.append("http://192.168.1.1:5173")
+    origins.append("http://10.0.0.1:5173")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

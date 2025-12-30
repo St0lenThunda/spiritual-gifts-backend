@@ -13,6 +13,7 @@ from ..schemas import (
     OrganizationUpdate,
     OrganizationResponse,
     OrganizationMemberInvite,
+    OrganizationMemberUpdate,
     OrganizationBulkAction,
     UserResponse,
 )
@@ -177,11 +178,13 @@ async def list_organization_members(
         
         top_gift = None
         if member_surveys:
-            # Surveys are already ordered by desc date, so first is latest
             latest_survey = member_surveys[0]
             scores = latest_survey.scores or {}
             if scores:
-                top_gift = max(scores, key=scores.get)
+                # Filter out 'overall' before finding max
+                valid_scores = {k: v for k, v in scores.items() if k.lower() != 'overall'}
+                if valid_scores:
+                    top_gift = max(valid_scores, key=valid_scores.get)
         
         result.append({
             "id": m.id,
@@ -481,8 +484,10 @@ async def get_member_assessments(
     result = []
     for assessment in assessments:
         scores = assessment.scores or {}
-        top_gift = max(scores, key=scores.get) if scores else None
-        top_score = scores.get(top_gift, 0) if top_gift else 0
+        # Filter out 'overall' before finding max
+        valid_scores = {k: v for k, v in scores.items() if k.lower() != 'overall'}
+        top_gift = max(valid_scores, key=valid_scores.get) if valid_scores else None
+        top_score = valid_scores.get(top_gift, 0) if top_gift else 0
         
         result.append({
             "id": assessment.id,
@@ -507,7 +512,7 @@ async def get_member_assessments(
 @router.patch("/members/{user_id}", response_model=UserResponse)
 async def update_organization_member(
     user_id: int,
-    member_data: OrganizationMemberInvite, # Reusing this for simplicity as it has role
+    member_data: OrganizationMemberUpdate,
     org: Organization = Depends(require_org),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

@@ -112,7 +112,7 @@ async def get_user_context(
         token = request.cookies.get("access_token")
         
     if not token:
-        logger.warning("unauthorized_access", reason="missing_token", path=request.url.path)
+        logger.warning("unauthorized_access", reason="missing_token", path=request.url.path, cookies=list(request.cookies.keys()))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",

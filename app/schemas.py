@@ -31,7 +31,9 @@ class UserResponse(BaseModel):
     id: int = Field(..., description="Unique internal user ID")
     email: str = Field(..., description="User's verified email address")
     role: str = Field("user", description="User's role (user or admin)")
+    org_id: Optional[UUID] = Field(None, description="Organization ID affiliation")
     membership_status: str = Field("active", description="Status within the organization (pending or active)")
+    global_preferences: Dict[str, Any] = Field(default_factory=dict, description="User's global preferences")
     created_at: datetime = Field(..., description="Timestamp of user account creation")
     last_login: Optional[datetime] = Field(None, description="Timestamp of the most recent successful login")
 
@@ -179,6 +181,18 @@ class OrganizationMemberInvite(BaseModel):
     @classmethod
     def validate_role(cls, v: str) -> str:
         if v not in ["user", "admin"]:
+            raise ValueError("Role must be 'user' or 'admin'")
+        return v
+
+
+class OrganizationMemberUpdate(BaseModel):
+    """Schema for updating an existing organization member."""
+    role: Optional[str] = Field(None, description="Role to assign (user or admin)")
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ["user", "admin"]:
             raise ValueError("Role must be 'user' or 'admin'")
         return v
 

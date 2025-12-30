@@ -74,8 +74,9 @@ class SurveyService:
         high = []
         moderate = []
         
-        # Sort gifts by score descending
-        sorted_gifts = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        # Filter out 'overall' and sort gifts by score descending
+        valid_scores = {k: v for k, v in scores.items() if k.lower() != 'overall'}
+        sorted_gifts = sorted(valid_scores.items(), key=lambda x: x[1], reverse=True)
         
         for gift, score in sorted_gifts:
             if score >= 32:
@@ -260,12 +261,17 @@ class SurveyService:
             
             # Accumulate totals for averages
             for gift, score in scores.items():
+                if gift.lower() == 'overall':
+                    continue
                 gift_totals[gift] = gift_totals.get(gift, 0) + score
                 
             # Determine top gift for this survey
             if scores:
-                top_gift = max(scores.items(), key=lambda x: x[1])[0]
-                top_gifts_counts[top_gift] = top_gifts_counts.get(top_gift, 0) + 1
+                # Filter out 'overall' before finding max
+                valid_scores = {k: v for k, v in scores.items() if k.lower() != 'overall'}
+                if valid_scores:
+                    top_gift = max(valid_scores.items(), key=lambda x: x[1])[0]
+                    top_gifts_counts[top_gift] = top_gifts_counts.get(top_gift, 0) + 1
         
         # Calculate averages
         gift_averages = {
