@@ -13,12 +13,14 @@ from ..schemas import (
     OrganizationUpdate,
     OrganizationResponse,
     OrganizationMemberInvite,
+    OrganizationBulkAction,
     UserResponse,
 )
 from ..services.survey_service import SurveyService
 from ..services.audit_service import AuditService
 from ..neon_auth import get_current_user, require_org
 from ..services.entitlements import get_plan_features, FEATURE_USERS
+from ..logging_setup import logger
 
 router = APIRouter(prefix="/organizations", tags=["Organizations"])
 
@@ -542,3 +544,94 @@ async def update_organization_member(
     )
     
     return user
+
+
+@router.post("/members/bulk-approve", status_code=status.HTTP_200_OK)
+async def bulk_approve_members(
+    action: OrganizationBulkAction,
+    org: Organization = Depends(require_org),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Approve multiple pending members."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can approve members")
+    
+    # Tier Check
+    features = get_plan_features(org.plan)
+    max_users = features.get(FEATURE_USERS, 10)
+    current_active_count = db.query(User).filter(User.org_id == org.id, User.membership_status == "active").count()
+    
+    available_slots = max_users - current_active_count
+    
+    users = db.query(User).filter(
+        User.id.in_(action.user_ids), 
+        User.org_id == org.id,
+        User.membership_status == "pending"
+    ).all()
+    
+    if not users:
+        return {"message": "No pending members found to approve", "approved_count": 0}
+    
+    if len(users) > available_slots:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Tier limit reached. You only have {available_slots} slots available, but tried to approve {len(users)} users."
+        )
+    
+    approved_emails = []
+    for user in users:
+        user.membership_status = "active"
+        approved_emails.append(user.email)
+        
+        AuditService.log_action(
+            db=db,
+            user=current_user,
+            action="approve_member",
+            target_type="user",
+            target_id=str(user.id),
+            details={"email": user.email, "bulk": True}
+        )
+    
+    db.commit()
+    return {"message": f"Successfully approved {len(approved_emails)} members", "approved_count": len(approved_emails)}
+
+
+@router.post("/members/bulk-reject", status_code=status.HTTP_200_OK)
+async def bulk_reject_members(
+    action: OrganizationBulkAction,
+    org: Organization = Depends(require_org),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Reject multiple members."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can manage members")
+    
+    users = db.query(User).filter(
+        User.id.in_(action.user_ids), 
+        User.org_id == org.id
+    ).all()
+    
+    rejected_count = 0
+    for user in users:
+        # Prevent self-rejection
+        if user.id == current_user.id:
+            continue
+            
+        user.org_id = None
+        user.membership_status = "active"
+        user.role = "user"
+        rejected_count += 1
+        
+        AuditService.log_action(
+            db=db,
+            user=current_user,
+            action="reject_member",
+            target_type="user",
+            target_id=str(user.id),
+            details={"email": user.email, "bulk": True}
+        )
+    
+    db.commit()
+    return {"message": f"Successfully removed/rejected {rejected_count} members", "rejected_count": rejected_count}

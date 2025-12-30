@@ -182,6 +182,11 @@ class OrganizationMemberInvite(BaseModel):
             raise ValueError("Role must be 'user' or 'admin'")
         return v
 
+
+class OrganizationBulkAction(BaseModel):
+    """Schema for bulk actions on organization members."""
+    user_ids: List[int] = Field(..., description="List of internal user IDs to perform action on")
+
 # User Preference schemas
 class PreferenceUpdate(BaseModel):
     """Schema for updating user preferences."""
