@@ -21,6 +21,10 @@ class Organization(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # New denomination relationship (Model C support)
+    denomination_id = Column(UUID(as_uuid=True), ForeignKey("denominations.id"), nullable=True, index=True)
+    denomination = relationship("Denomination", back_populates="organizations")
+
     # Relationships
     users = relationship("User", back_populates="organization")
     surveys = relationship("Survey", back_populates="organization")
@@ -114,3 +118,31 @@ class AuditLog(Base):
     # Relationships
     actor = relationship("User", backref="audit_logs")
     organization = relationship("Organization", backref="audit_logs")
+
+# New models for multi‑denominational support
+
+class Denomination(Base):
+    """Denomination model representing a theological tradition or configuration bundle."""
+    __tablename__ = "denominations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    slug = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(255), nullable=False)
+    logo_url = Column(String(255), nullable=True)
+    default_currency = Column(String(10), nullable=True)
+    scripture_set_id = Column(UUID(as_uuid=True), ForeignKey("scripture_sets.id"), nullable=True)
+
+    # Relationships
+    scripture_set = relationship("ScriptureSet", back_populates="denominations")
+    organizations = relationship("Organization", back_populates="denomination")
+
+class ScriptureSet(Base):
+    """Set of scripture references used for a particular denomination/profile."""
+    __tablename__ = "scripture_sets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(255), nullable=False)
+    verses = Column(JSON, default={}, nullable=True)  # e.g., {"grace": "Eph 2:8", ...}
+
+    # Relationships
+    denominations = relationship("Denomination", back_populates="scripture_set")

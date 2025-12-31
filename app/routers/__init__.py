@@ -286,37 +286,39 @@ def list_user_surveys(
 # Public Routes
 # ============================================================================
 
+from ..services.content_service import ContentService
+
+# ... imports ...
+
 @router.get("/questions")
 @cache(expire=3600, coder=SafeJsonCoder)
 async def get_questions(
     accept_language: str = Header("en"),
-    locale: str = None
+    locale: str = None,
+    org_slug: str = None,
+    db: Session = Depends(get_db)
 ):
     """
     Get the assessment questions.
-    
-    Returns:
-        Assessment questions
     """
     # Prefer query param for caching variance, fallback to header
     final_locale = locale or (accept_language[:2].lower() if accept_language else "en")
-    return load_questions(final_locale)
+    return ContentService.get_questions_for_context(db, final_locale, org_slug)
 
 @router.get("/gifts")
 @cache(expire=3600, coder=SafeJsonCoder)
 async def get_gifts(
     accept_language: str = Header("en"),
-    locale: str = None
+    locale: str = None,
+    org_slug: str = None,
+    db: Session = Depends(get_db)
 ):
     """
     Get information about spiritual gifts.
-    
-    Returns:
-        Spiritual gifts data
     """
     # Prefer query param for caching variance, fallback to header
     final_locale = locale or (accept_language[:2].lower() if accept_language else "en")
-    return load_gifts(final_locale)
+    return ContentService.get_gifts_for_context(db, final_locale, org_slug)
 
 @router.get("/scriptures")
 @cache(expire=3600, coder=SafeJsonCoder)

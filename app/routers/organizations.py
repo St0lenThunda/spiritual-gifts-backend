@@ -126,6 +126,9 @@ async def update_my_organization(
     
     if org_data.branding is not None:
         org.branding = org_data.branding
+
+    if org_data.denomination_id is not None:
+        org.denomination_id = org_data.denomination_id
     
     db.commit()
     db.refresh(org)

@@ -154,6 +154,57 @@ class OrganizationUpdate(BaseModel):
     """Schema for updating an organization."""
     name: Optional[str] = Field(None, min_length=2, max_length=255)
     branding: Optional[Dict[str, Any]] = Field(None, description="Visual branding configuration")
+    denomination_id: Optional[UUID] = Field(None, description="Denomination configuration ID for the organization")
+
+
+class OrganizationThemeCreate(BaseModel):
+    """Schema for creating a new organization theme."""
+    name: str = Field(..., description="Name of the theme")
+    config: Dict[str, Any] = Field(..., description="JSON configuration for the theme")
+
+class OrganizationThemeUpdate(BaseModel):
+    """Schema for updating an organization theme."""
+    name: Optional[str] = Field(None, description="Name of the theme")
+    config: Optional[Dict[str, Any]] = Field(None, description="JSON configuration for the theme")
+
+# New schemas for multi‑denominational support
+class ScriptureSetBase(BaseModel):
+    name: str = Field(..., description="Human readable name for the scripture set")
+    verses: Dict[str, List[str]] = Field(default_factory=dict, description="Mapping of key -> verse references, e.g. {'Administration': ['1 Cor 12:28']}")
+
+class ScriptureSetCreate(ScriptureSetBase):
+    pass
+
+class ScriptureSetResponse(ScriptureSetBase):
+    id: UUID = Field(..., description="Unique ID for the scripture set")
+    model_config = ConfigDict(from_attributes=True)
+
+class DenominationBase(BaseModel):
+    slug: str = Field(..., description="URL‑friendly identifier for the denomination")
+    display_name: str = Field(..., description="Human readable name for the denomination")
+    logo_url: Optional[str] = Field(None, description="Optional logo image URL")
+    default_currency: Optional[str] = Field(None, description="Default currency code for pricing, if applicable")
+    scripture_set_id: Optional[UUID] = Field(None, description="Reference to a ScriptureSet for this denomination")
+
+class DenominationCreate(DenominationBase):
+    pass
+
+class DenominationResponse(DenominationBase):
+    id: UUID = Field(..., description="Unique denomination ID")
+    scripture_set: Optional[ScriptureSetResponse] = Field(None, description="Embedded scripture set details")
+    model_config = ConfigDict(from_attributes=True)
+
+class OrganizationThemeResponse(BaseModel):
+    """Schema for organization theme responses."""
+    id: UUID = Field(..., description="Unique theme ID")
+    org_id: UUID = Field(..., description="Organization ID this theme belongs to")
+    name: str = Field(..., description="Name of the theme")
+    config: Dict[str, Any] = Field(..., description="JSON configuration for the theme")
+    is_active: bool = Field(..., description="Whether this theme is currently active for the organization")
+    created_at: datetime = Field(..., description="When the theme was created")
+    updated_at: datetime = Field(..., description="When the theme was last modified")
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrganizationResponse(BaseModel):
@@ -164,11 +215,14 @@ class OrganizationResponse(BaseModel):
     plan: str = Field(..., description="Subscription plan (free, individual, ministry, church)")
     entitlements: Optional[Dict[str, Any]] = Field(None, description="Feature limits and entitlements for the current plan")
     branding: Optional[Dict[str, Any]] = Field({}, description="Visual branding configuration")
+    theme_id: Optional[UUID] = Field(None, description="ID of the active theme for the organization")
     is_active: bool = Field(..., description="Whether the organization is active")
     is_demo: bool = Field(False, description="Whether this is a demo organization (read-only mode)")
     created_at: datetime = Field(..., description="When the organization was created")
     updated_at: datetime = Field(..., description="When the organization was last modified")
-
+    # Denomination fields (Model C support)
+    denomination_id: Optional[UUID] = Field(None, description="Denomination configuration ID for the organization")
+    denomination: Optional[DenominationResponse] = Field(None, description="Denomination profile details (display_name, logo, etc.)")
     model_config = ConfigDict(from_attributes=True)
 
 

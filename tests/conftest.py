@@ -99,3 +99,11 @@ def test_user(db):
     db.commit()
     db.refresh(user)
     return user
+
+@pytest.fixture(autouse=True)
+def init_cache():
+    """Initialize fastapi-cache for tests."""
+    from fastapi_cache import FastAPICache
+    from fastapi_cache.backends.inmemory import InMemoryBackend
+    FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
+    yield

@@ -122,6 +122,10 @@ app = FastAPI(
     version="1.3.0",
     lifespan=lifespan
 )
+
+# Include denominations router
+from .routers import denominations
+app.include_router(denominations.router, prefix="/api/v1")
 app.state.limiter = limiter
 
 
