@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from ..models import Survey, User
 
 
+from datetime import datetime, timedelta
 from ..services.getJSONData import load_questions
 
 
@@ -249,12 +250,14 @@ class SurveyService:
             return {
                 "total_assessments": 0,
                 "gift_averages": {},
-                "top_gifts_distribution": {}
+                "top_gifts_distribution": {},
+                "gift_demographics": {}
             }
             
         # Initialize accumulators
         gift_totals = {}
         top_gifts_counts = {}
+        gift_demographics = {} # New accumulator for demographics
         
         for survey in surveys:
             scores = survey.scores or {}
@@ -272,6 +275,34 @@ class SurveyService:
                 if valid_scores:
                     top_gift = max(valid_scores.items(), key=lambda x: x[1])[0]
                     top_gifts_counts[top_gift] = top_gifts_counts.get(top_gift, 0) + 1
+                    
+                    # Track anonymized demographics (Role & Tenure)
+                    if top_gift not in gift_demographics:
+                        gift_demographics[top_gift] = {
+                            "roles": {},
+                            "tenure": {}
+                        }
+                    
+                    # Get user context
+                    user = survey.user
+                    if user:
+                        # 1. Role Category
+                        role_key = user.role # e.g. "admin", "user"
+                        gift_demographics[top_gift]["roles"][role_key] = gift_demographics[top_gift]["roles"].get(role_key, 0) + 1
+                        
+                        # 2. Tenure Band
+                        # Calculate years since creation
+                        if user.created_at:
+                            tenure_years = (datetime.utcnow() - user.created_at).days / 365.25
+                            
+                            if tenure_years < 1:
+                                band = "<1_year"
+                            elif 1 <= tenure_years < 3:
+                                band = "1-3_years"
+                            else:
+                                band = "3+_years"
+                                
+                            gift_demographics[top_gift]["tenure"][band] = gift_demographics[top_gift]["tenure"].get(band, 0) + 1
         
         # Calculate averages
         gift_averages = {
@@ -289,8 +320,6 @@ class SurveyService:
         # Calculate active members (unique users who have taken an assessment)
         active_members_count = len(set(s.user_id for s in surveys))
         
-        # Calculate trends (group by month for the last 12 months)
-        from datetime import datetime, timedelta
         
         # Initialize last 12 months with 0
         today = datetime.utcnow()
@@ -332,5 +361,6 @@ class SurveyService:
             "active_members_count": active_members_count,
             "assessments_trend": trends_list,
             "gift_averages": gift_averages,
-            "top_gifts_distribution": sorted_distribution
+            "top_gifts_distribution": sorted_distribution,
+            "gift_demographics": gift_demographics
         }
