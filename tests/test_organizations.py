@@ -49,6 +49,10 @@ def mock_org():
     from datetime import datetime
     org.created_at = datetime(2025, 12, 24)
     org.updated_at = datetime(2025, 12, 24)
+    org.theme_id = None
+    org.is_demo = False
+    org.denomination_id = None
+    org.denomination = None
     return org
 
 
