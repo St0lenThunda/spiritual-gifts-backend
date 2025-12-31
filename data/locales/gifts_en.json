@@ -3,7 +3,8 @@
     "name": "Administration",
     "definition": "The ability to organize people, resources, and time to help the church reach its goals and be effective.",
     "scriptures": [
-      "1 Cor. 12:28"
+      "1 Cor. 12:28",
+      "Luke 14:28"
     ],
     "traits": [
       "Organized",
@@ -14,7 +15,7 @@
   },
   "Apostleship": {
     "name": "Apostleship",
-    "definition": "The ability to start new ministries and oversee their development, often in new places or cultures.",
+    "definition": "The ability to start new ministries and oversee their development, often in new cultures or places.",
     "scriptures": [
       "1 Cor. 12:28",
       "Eph. 4:11"
@@ -259,6 +260,7 @@
     "name": "Tongues",
     "definition": "The ability to receive and communicate an immediate message of God to His people through a divinely anointed utterance in a language never learned.",
     "scriptures": [
+      "Acts 2:4",
       "1 Cor. 12:10",
       "1 Cor. 12:28"
     ],
@@ -266,6 +268,18 @@
       "Spiritual",
       "Expressive",
       "Prayer-oriented"
+    ]
+  },
+  "Interpretation": {
+    "name": "Interpretation",
+    "definition": "The ability to make known in the vernacular the message of one who speaks in tongues.",
+    "scriptures": [
+      "1 Cor. 12:10"
+    ],
+    "traits": [
+      "Discernment",
+      "Spiritual",
+      "Articulate"
     ]
   },
   "Wisdom": {

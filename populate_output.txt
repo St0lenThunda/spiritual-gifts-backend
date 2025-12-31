@@ -1,0 +1,9 @@
+Processing ScriptureSet: Baptist Standard
+  Enriched verses for 4 gifts.
+Processing ScriptureSet: Charismatic Emphasis
+  Enriched verses for 4 gifts.
+Processing ScriptureSet: Spiritual Gifts Core
+  Enriched verses for 21 gifts.
+Processing ScriptureSet: Catholic Lectionary
+  Enriched verses for 4 gifts.
+Success: All scripture sets populated with texts.

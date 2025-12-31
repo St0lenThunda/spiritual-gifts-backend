@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
-from typing import Optional, List, Dict, Any, Annotated
+from typing import Optional, List, Dict, Any, Annotated, Union
 from uuid import UUID
 from datetime import datetime
 
@@ -168,9 +168,21 @@ class OrganizationThemeUpdate(BaseModel):
     config: Optional[Dict[str, Any]] = Field(None, description="JSON configuration for the theme")
 
 # New schemas for multi‑denominational support
+class ScriptureVerses(BaseModel):
+    KJV: Optional[str] = None
+    NIV: Optional[str] = None
+    ESV: Optional[str] = None
+
+class ScriptureObject(BaseModel):
+    reference: str
+    verses: Optional[ScriptureVerses] = None
+
 class ScriptureSetBase(BaseModel):
     name: str = Field(..., description="Human readable name for the scripture set")
-    verses: Dict[str, List[str]] = Field(default_factory=dict, description="Mapping of key -> verse references, e.g. {'Administration': ['1 Cor 12:28']}")
+    verses: Dict[str, List[Union[ScriptureObject, str]]] = Field(
+        default_factory=dict, 
+        description="Mapping of gift -> scripture references. Can be simple strings or enriched objects."
+    )
 
 class ScriptureSetCreate(ScriptureSetBase):
     pass
