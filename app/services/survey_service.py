@@ -7,6 +7,7 @@ Contains business logic for survey operations, including:
 """
 from typing import List, Dict, Any, Optional
 from uuid import UUID
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from ..models import Survey, User
 
@@ -243,7 +244,22 @@ class SurveyService:
             - gift_averages: Dict[str, float]
             - top_gifts_distribution: Dict[str, int]
         """
-        surveys = db.query(Survey).filter(Survey.org_id == org_id).all()
+        # Get all members of the organization
+        members = db.query(User).filter(User.org_id == org_id).all()
+        member_ids = [m.id for m in members]
+
+        if not member_ids:
+             # Fallback if no members found (unlikely if org exists, but safe)
+             surveys = db.query(Survey).filter(Survey.org_id == org_id).all()
+        else:
+            # Fetch surveys for these members OR explicitly linked to the org
+            # This ensures we capture pre-join assessments for current members
+            surveys = db.query(Survey).filter(
+                or_(
+                    Survey.org_id == org_id,
+                    Survey.user_id.in_(member_ids)
+                )
+            ).all()
         
         total_assessments = len(surveys)
         if total_assessments == 0:

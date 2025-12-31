@@ -473,11 +473,10 @@ async def get_member_assessments(
             detail="Member not found in this organization"
         )
     
-    # Get member's assessments
+    # Get member's assessments - fetch all for this user regardless of org context
     from ..models import Survey
     assessments = db.query(Survey).filter(
-        Survey.user_id == member_id,
-        Survey.org_id == org.id
+        Survey.user_id == member_id
     ).order_by(Survey.created_at.desc()).all()
     
     # Format response with top gift for each assessment
