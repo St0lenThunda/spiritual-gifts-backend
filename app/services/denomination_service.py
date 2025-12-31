@@ -30,6 +30,8 @@ def create_denomination(db: Session, payload: DenominationCreate) -> Denominatio
         logo_url=payload.logo_url,
         default_currency=payload.default_currency,
         scripture_set_id=payload.scripture_set_id,
+        active_gift_keys=payload.active_gift_keys,
+        pastoral_overlays=payload.pastoral_overlays,
     )
     db.add(denom)
     db.flush()  # assign id
@@ -61,6 +63,8 @@ def update_denomination(db: Session, db_denom: Denomination, payload: Denominati
     db_denom.logo_url = payload.logo_url
     db_denom.default_currency = payload.default_currency
     db_denom.scripture_set_id = payload.scripture_set_id
+    db_denom.active_gift_keys = payload.active_gift_keys
+    db_denom.pastoral_overlays = payload.pastoral_overlays
     
     db.commit()
     db.refresh(db_denom)

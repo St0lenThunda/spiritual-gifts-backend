@@ -107,3 +107,20 @@ def init_cache():
     from fastapi_cache.backends.inmemory import InMemoryBackend
     FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
     yield
+
+@pytest.fixture
+def admin_user(db):
+    """Create a test admin user."""
+    from app.models import User
+    user = User(email="admin@example.com", role="admin")
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+@pytest.fixture
+def admin_token_headers(admin_user):
+    """Return auth headers for admin user."""
+    from app.neon_auth import create_access_token
+    token = create_access_token({"sub": str(admin_user.id)})
+    return {"Authorization": f"Bearer {token}"}

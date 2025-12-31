@@ -197,6 +197,8 @@ class DenominationBase(BaseModel):
     logo_url: Optional[str] = Field(None, description="Optional logo image URL")
     default_currency: Optional[str] = Field(None, description="Default currency code for pricing, if applicable")
     scripture_set_id: Optional[UUID] = Field(None, description="Reference to a ScriptureSet for this denomination")
+    active_gift_keys: Optional[List[str]] = Field(None, description="List of enabled gift keys (Constraint Layer)")
+    pastoral_overlays: Optional[Dict[str, Any]] = Field(None, description="Pastoral metadata overrides (Interpretive Layer)")
 
 class DenominationCreate(DenominationBase):
     pass

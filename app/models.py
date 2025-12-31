@@ -131,6 +131,10 @@ class Denomination(Base):
     logo_url = Column(String(255), nullable=True)
     default_currency = Column(String(10), nullable=True)
     scripture_set_id = Column(UUID(as_uuid=True), ForeignKey("scripture_sets.id"), nullable=True)
+    
+    # Governance (ADR-022)
+    active_gift_keys = Column(JSON, default=[], nullable=True)      # List of enabled gift keys
+    pastoral_overlays = Column(JSON, default={}, nullable=True)     # Map of gift_key -> { note, warning, etc }
 
     # Relationships
     scripture_set = relationship("ScriptureSet", back_populates="denominations")
