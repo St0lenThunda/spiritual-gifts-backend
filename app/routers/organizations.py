@@ -20,7 +20,7 @@ from ..schemas import (
 from ..services.survey_service import SurveyService
 from ..services.audit_service import AuditService
 from ..neon_auth import get_current_user, require_org
-from ..services.entitlements import get_plan_features, FEATURE_USERS
+from ..services.entitlements import get_plan_features, FEATURE_USERS, FEATURE_BULK_ACTIONS
 from ..logging_setup import logger
 
 router = APIRouter(prefix="/organizations", tags=["Organizations"])
@@ -563,6 +563,13 @@ async def bulk_approve_members(
     
     # Tier Check
     features = get_plan_features(org.plan)
+    
+    if not features.get(FEATURE_BULK_ACTIONS, False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Bulk actions are not available on the {org.plan} plan. Please upgrade to use this feature."
+        )
+
     max_users = features.get(FEATURE_USERS, 10)
     current_active_count = db.query(User).filter(User.org_id == org.id, User.membership_status == "active").count()
     
@@ -612,6 +619,14 @@ async def bulk_reject_members(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Only admins can manage members")
     
+    # Tier Check
+    features = get_plan_features(org.plan)
+    if not features.get(FEATURE_BULK_ACTIONS, False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Bulk actions are not available on the {org.plan} plan. Please upgrade to use this feature."
+        )
+
     users = db.query(User).filter(
         User.id.in_(action.user_ids), 
         User.org_id == org.id

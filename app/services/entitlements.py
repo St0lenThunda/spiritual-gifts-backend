@@ -22,6 +22,7 @@ FEATURE_CUSTOM_ORG_THEMING = "custom_org_theming"
 FEATURE_ANALYTICS = "analytics"
 FEATURE_BRANDING = "branding"
 FEATURE_MANAGE_SUBSCRIPTION = "manage_subscription"
+FEATURE_BULK_ACTIONS = "bulk_actions"
 
 # Support Levels
 SUPPORT_NONE = "none"
@@ -50,7 +51,8 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_CUSTOM_ORG_THEMING: False,
         FEATURE_ANALYTICS: False,
         FEATURE_BRANDING: False,
-        FEATURE_MANAGE_SUBSCRIPTION: False
+        FEATURE_MANAGE_SUBSCRIPTION: False,
+        FEATURE_BULK_ACTIONS: False
     },
     Plan.INDIVIDUAL: {
         FEATURE_USERS: 50,
@@ -66,7 +68,8 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_CUSTOM_ORG_THEMING: False,
         FEATURE_ANALYTICS: False,
         FEATURE_BRANDING: False,
-        FEATURE_MANAGE_SUBSCRIPTION: True
+        FEATURE_MANAGE_SUBSCRIPTION: True,
+        FEATURE_BULK_ACTIONS: False
     },
     Plan.MINISTRY: {
         FEATURE_USERS: 100,
@@ -82,7 +85,8 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_CUSTOM_ORG_THEMING: False,
         FEATURE_ANALYTICS: True,
         FEATURE_BRANDING: True,
-        FEATURE_MANAGE_SUBSCRIPTION: True
+        FEATURE_MANAGE_SUBSCRIPTION: True,
+        FEATURE_BULK_ACTIONS: True
     },
     Plan.CHURCH: {
         FEATURE_USERS: float('inf'),
@@ -98,7 +102,8 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_CUSTOM_ORG_THEMING: True,
         FEATURE_ANALYTICS: True,
         FEATURE_BRANDING: True,
-        FEATURE_MANAGE_SUBSCRIPTION: True
+        FEATURE_MANAGE_SUBSCRIPTION: True,
+        FEATURE_BULK_ACTIONS: True
     }
 }
 

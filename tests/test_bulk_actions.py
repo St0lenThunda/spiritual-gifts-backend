@@ -105,31 +105,40 @@ class TestBulkActions:
         assert user2.role == "user"
         assert mock_db.commit.called
 
-    def test_bulk_approve_tier_limit(self, mock_admin, mock_org, mock_db):
-        # Force a tier limit hit (free plan has 10 member limit)
+    def test_bulk_approve_locked_on_free_tier(self, mock_admin, mock_org, mock_db):
+        # Free plan doesn't support bulk actions at all
         mock_org.plan = "free"
         
-        mock_query = MagicMock()
-        mock_db.query.return_value = mock_query
-        mock_query.filter.return_value = mock_query
-        
-        # 10 active members already
-        mock_query.count.return_value = 10
-        
-        # We need to return some users for the tier check to be triggered
-        user10 = MagicMock(spec=User)
-        user10.id = 10
-        user11 = MagicMock(spec=User)
-        user11.id = 11
-        mock_query.all.return_value = [user10, user11]
-
         response = client.post(
             "/api/v1/organizations/members/bulk-approve",
             json={"user_ids": [10, 11]}
         )
 
         assert response.status_code == 403
-        assert "limit reached" in response.json()["detail"].lower()
+        assert "bulk actions are not available on the free plan" in response.json()["detail"].lower()
+
+    def test_bulk_approve_tier_limit_on_ministry(self, mock_admin, mock_org, mock_db):
+        # Ministry plan supports bulk actions but has a limit (e.g., 100 users)
+        mock_org.plan = "ministry"
+        
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        
+        # 100 active members already
+        mock_query.count.return_value = 100
+        
+        user100 = MagicMock(spec=User)
+        user100.id = 100
+        mock_query.all.return_value = [user100]
+
+        response = client.post(
+            "/api/v1/organizations/members/bulk-approve",
+            json={"user_ids": [100]}
+        )
+
+        assert response.status_code == 403
+        assert "tier limit reached" in response.json()["detail"].lower()
 
     def test_update_member_role_success(self, mock_admin, mock_org, mock_db):
         user2 = MagicMock(spec=User)
@@ -140,6 +149,7 @@ class TestBulkActions:
         user2.membership_status = "active"
         user2.created_at = datetime.utcnow()
         user2.last_login = None
+        user2.global_preferences = {}
 
         mock_query = MagicMock()
         mock_db.query.return_value = mock_query

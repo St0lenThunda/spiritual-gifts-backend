@@ -1,0 +1,253 @@
+.
+├── __pycache__
+│   ├── main.cpython-310.pyc
+│   └── test_emit.cpython-310-pytest-9.0.2.pyc
+├── alembic
+│   ├── README
+│   ├── README.md
+│   ├── __pycache__
+│   │   └── env.cpython-310.pyc
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions
+│       ├── 0c90da49f79c_add_discernment_to_survey.py
+│       ├── 1a69f2de6106_add_user_preferences_columns.py
+│       ├── 27eb8521f48c_add_log_entries_table.py
+│       ├── 3082b97550cb_add_subscription_fields.py
+│       ├── 5a42da649428_add_request_id_to_logs.py
+│       ├── 748d45abbe8a_add_is_demo_to_organization.py
+│       ├── 8aa2b307a70a_add_index_to_surveys_user_id.py
+│       ├── __pycache__
+│       │   ├── 0c90da49f79c_add_discernment_to_survey.cpython-310.pyc
+│       │   ├── 1a69f2de6106_add_user_preferences_columns.cpython-310.pyc
+│       │   ├── 27eb8521f48c_add_log_entries_table.cpython-310.pyc
+│       │   ├── 3082b97550cb_add_subscription_fields.cpython-310.pyc
+│       │   ├── 5a42da649428_add_request_id_to_logs.cpython-310.pyc
+│       │   ├── 748d45abbe8a_add_is_demo_to_organization.cpython-310.pyc
+│       │   ├── 8aa2b307a70a_add_index_to_surveys_user_id.cpython-310.pyc
+│       │   ├── c7f7bb1e9d9b_add_role_column_to_users_table.cpython-310.pyc
+│       │   └── e23de9ac059d_add_role_column.cpython-310.pyc
+│       └── e23de9ac059d_add_role_column.py
+├── alembic.ini
+├── app
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-310.pyc
+│   │   ├── config.cpython-310.pyc
+│   │   ├── database.cpython-310.pyc
+│   │   ├── database.cpython-312.pyc
+│   │   ├── dev_auth.cpython-310.pyc
+│   │   ├── limiter.cpython-310.pyc
+│   │   ├── logging_setup.cpython-310.pyc
+│   │   ├── main.cpython-310.pyc
+│   │   ├── main.cpython-312.pyc
+│   │   ├── models.cpython-310.pyc
+│   │   ├── models.cpython-312.pyc
+│   │   ├── neon_auth.cpython-310.pyc
+│   │   ├── neon_auth.cpython-312.pyc
+│   │   ├── routers.cpython-310.pyc
+│   │   ├── routers.cpython-312.pyc
+│   │   └── schemas.cpython-310.pyc
+│   ├── config.py
+│   ├── data
+│   │   ├── gifts.json
+│   │   ├── questions.json
+│   │   ├── scriptures.json
+│   │   └── spiritual-gifts.code-workspace
+│   ├── database.py
+│   ├── dependencies
+│   │   └── __pycache__
+│   │       ├── org.cpython-310.pyc
+│   │       └── plan_limits.cpython-310.pyc
+│   ├── dev_auth.py
+│   ├── limiter.py
+│   ├── logging_setup.py
+│   ├── main.py
+│   ├── models.py
+│   ├── neon_auth.py
+│   ├── routers
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-310.pyc
+│   │   │   ├── admin.cpython-310.pyc
+│   │   │   ├── billing.cpython-310.pyc
+│   │   │   ├── organizations.cpython-310.pyc
+│   │   │   └── preferences.cpython-310.pyc
+│   │   ├── admin.py
+│   │   ├── billing.py
+│   │   ├── organizations.py
+│   │   └── preferences.py
+│   ├── schemas.py
+│   └── services
+│       ├── __init__.py
+│       ├── __pycache__
+│       │   ├── __init__.cpython-310.pyc
+│       │   ├── audit_service.cpython-310.pyc
+│       │   ├── auth_service.cpython-310.pyc
+│       │   ├── billing_service.cpython-310.pyc
+│       │   ├── entitlements.cpython-310.pyc
+│       │   ├── event_store.cpython-310.pyc
+│       │   ├── getJSONData.cpython-310.pyc
+│       │   ├── questions.cpython-310.pyc
+│       │   └── survey_service.cpython-310.pyc
+│       ├── audit_service.py
+│       ├── auth_service.py
+│       ├── billing_service.py
+│       ├── entitlements.py
+│       ├── event_store.py
+│       ├── getJSONData.py
+│       └── survey_service.py
+├── backendStructure.txt
+├── backend_folder_structure.txt
+├── cookies.txt
+├── cookies2.txt
+├── data
+│   ├── gifts.json
+│   ├── locales
+│   │   ├── gifts_en.json
+│   │   ├── gifts_es.json
+│   │   ├── gifts_fr.json
+│   │   ├── gifts_ru.json
+│   │   ├── questions_en.json
+│   │   ├── questions_es.json
+│   │   ├── questions_fr.json
+│   │   └── questions_ru.json
+│   ├── questions.json
+│   └── scriptures.json
+├── debug_check_users.py
+├── main.py
+├── migrate_branding.py
+├── migrate_db.py
+├── migrate_user_org.py
+├── pytest.ini
+├── render.yaml
+├── requirements.txt
+├── scripts
+│   └── setup_demo_env.py
+├── seed_demo_data.py
+├── test.db
+├── test_preferences.db
+├── tests
+│   ├── __pycache__
+│   │   ├── conftest.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_100_coverage.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_admin.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_admin.cpython-310.pyc
+│   │   ├── test_admin_pagination.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_audit.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_audit_log.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_auth_cookies.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_auth_ext.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_billing.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_billing_webhook.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_branding.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_bulk_actions.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_caching.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_coverage_edge_cases.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_coverage_gap_closers.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_csrf_coverage.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_database.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_demo_mode.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_final_gap_closers.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_health_exceptions.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_health_monitor.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_health_paths.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_i18n.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_input_validation.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_logging.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_logout.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_neon_integration.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_org_analytics.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_org_management.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_organizations.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_pagination.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_pii_masking.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_preferences.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_production_gate.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_proxy_health.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_rate_limiting.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_request_id_propagation.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_router_coverage.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_services.cpython-310-pytest-9.0.2.pyc
+│   │   ├── test_super_admin.cpython-310-pytest-9.0.2.pyc
+│   │   └── test_surveys.cpython-310-pytest-9.0.2.pyc
+│   ├── conftest.py
+│   ├── test_100_coverage.py
+│   ├── test_admin.py
+│   ├── test_admin_pagination.py
+│   ├── test_audit.py
+│   ├── test_audit_log.py
+│   ├── test_auth_cookies.py
+│   ├── test_auth_ext.py
+│   ├── test_billing_webhook.py
+│   ├── test_branding.py
+│   ├── test_bulk_actions.py
+│   ├── test_coverage_edge_cases.py
+│   ├── test_coverage_gap_closers.py
+│   ├── test_database.py
+│   ├── test_demo_mode.py
+│   ├── test_final_gap_closers.py
+│   ├── test_health_exceptions.py
+│   ├── test_health_monitor.py
+│   ├── test_health_paths.py
+│   ├── test_input_validation.py
+│   ├── test_logging.py
+│   ├── test_logout.py
+│   ├── test_neon_integration.py
+│   ├── test_org_analytics.py
+│   ├── test_org_management.py
+│   ├── test_organizations.py
+│   ├── test_pagination.py
+│   ├── test_pii_masking.py
+│   ├── test_preferences.py
+│   ├── test_production_gate.py
+│   ├── test_proxy_health.py
+│   ├── test_rate_limiting.py
+│   ├── test_request_id_propagation.py
+│   ├── test_router_coverage.py
+│   ├── test_services.py
+│   ├── test_super_admin.py
+│   └── test_surveys.py
+├── venv
+│   ├── bin
+│   │   ├── Activate.ps1
+│   │   ├── activate
+│   │   ├── activate.csh
+│   │   ├── activate.fish
+│   │   ├── alembic
+│   │   ├── coverage
+│   │   ├── coverage-3.10
+│   │   ├── coverage3
+│   │   ├── dotenv
+│   │   ├── email_validator
+│   │   ├── fastapi
+│   │   ├── httpx
+│   │   ├── mako-render
+│   │   ├── normalizer
+│   │   ├── pip
+│   │   ├── pip3
+│   │   ├── pip3.10
+│   │   ├── py.test
+│   │   ├── pygmentize
+│   │   ├── pyrsa-decrypt
+│   │   ├── pyrsa-encrypt
+│   │   ├── pyrsa-keygen
+│   │   ├── pyrsa-priv2pub
+│   │   ├── pyrsa-sign
+│   │   ├── pyrsa-verify
+│   │   ├── pytest
+│   │   ├── python -> python3
+│   │   ├── python3 -> /usr/bin/python3
+│   │   ├── python3.10 -> python3
+│   │   └── uvicorn
+│   ├── include
+│   │   └── site
+│   │       └── python3.10
+│   ├── lib
+│   │   └── python3.10
+│   │       └── site-packages
+│   ├── lib64 -> lib
+│   └── pyvenv.cfg
+└── verify_role.py
+
+28 directories, 222 files
