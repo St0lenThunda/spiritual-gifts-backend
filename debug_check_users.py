@@ -23,6 +23,8 @@ def check_users():
                 org = db.query(Organization).filter(Organization.id == user.org_id).first()
                 if org:
                     print(f"  Organization: {org.name} (Slug: {org.slug}, ID: {org.id})")
+                    print(f"  Plan: {org.plan}")
+                    print(f"  Stripe Customer ID: {org.stripe_customer_id}")
                 else:
                     print(f"  Organization: <Not Found> (ID: {user.org_id})")
             else:
