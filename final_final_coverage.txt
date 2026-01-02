@@ -1,0 +1,203 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/thunda/Dev/543_Tools/spiritual_gifts_backend
+configfile: pytest.ini
+plugins: respx-0.22.0, cov-7.0.0, asyncio-1.3.0, anyio-4.12.0
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 216 items
+
+tests/test_100_coverage.py ........                                      [  3%]
+tests/test_admin.py ...........                                          [  8%]
+tests/test_admin_pagination.py ..                                        [  9%]
+tests/test_audit.py .                                                    [ 10%]
+tests/test_audit_log.py .                                                [ 10%]
+tests/test_auth_cookies.py ...                                           [ 12%]
+tests/test_auth_ext.py .....                                             [ 14%]
+tests/test_billing_service.py FF.F.                                      [ 16%]
+tests/test_billing_webhook.py ......................                     [ 26%]
+tests/test_branding.py .                                                 [ 27%]
+tests/test_bulk_actions.py .....                                         [ 29%]
+tests/test_content_override.py ..                                        [ 30%]
+tests/test_coverage_edge_cases.py ............                           [ 36%]
+tests/test_coverage_gap_closers.py ...                                   [ 37%]
+tests/test_database.py .                                                 [ 37%]
+tests/test_demo_mode.py ...                                              [ 39%]
+tests/test_denomination_service.py .F                                    [ 40%]
+tests/test_denominational_governance.py ...                              [ 41%]
+tests/test_denominations.py ...                                          [ 43%]
+tests/test_denominations_router.py .......                               [ 46%]
+tests/test_entitlements.py ....                                          [ 48%]
+tests/test_final_gap_closers.py ...                                      [ 49%]
+tests/test_gift_normalization.py ..                                      [ 50%]
+tests/test_health_exceptions.py .                                        [ 50%]
+tests/test_health_monitor.py ..                                          [ 51%]
+tests/test_health_paths.py ..                                            [ 52%]
+tests/test_i18n_backend.py ...                                           [ 54%]
+tests/test_input_validation.py ....                                      [ 56%]
+tests/test_logging.py ......                                             [ 58%]
+tests/test_logout.py .                                                   [ 59%]
+tests/test_member_lifecycle.py ....                                      [ 61%]
+tests/test_neon_integration.py ....                                      [ 62%]
+tests/test_org_analytics.py ..                                           [ 63%]
+tests/test_org_management.py .....                                       [ 66%]
+tests/test_organizations.py .................................            [ 81%]
+tests/test_pagination.py .                                               [ 81%]
+tests/test_pii_masking.py ..                                             [ 82%]
+tests/test_preferences.py .............                                  [ 88%]
+tests/test_production_gate.py ..                                         [ 89%]
+tests/test_proxy_health.py ...                                           [ 91%]
+tests/test_rate_limiting.py .                                            [ 91%]
+tests/test_request_id_propagation.py ..                                  [ 92%]
+tests/test_router_coverage.py ....                                       [ 94%]
+tests/test_services.py ......                                            [ 97%]
+tests/test_super_admin.py ....                                           [ 99%]
+tests/test_surveys.py ..                                                 [100%]
+
+=================================== FAILURES ===================================
+___________________ test_create_checkout_session_valid_plan ____________________
+
+    def test_create_checkout_session_valid_plan():
+        """Test creating a checkout session with a valid plan name from settings dict."""
+        with patch("app.services.billing_service.stripe", autospec=True) as mock_stripe:
+            mock_session = MagicMock()
+>           mock_stripe.checkout.Session.create.return_value = mock_session
+
+tests/test_billing_service.py:10: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <NonCallableMagicMock name='stripe' spec='module' id='138944955906080'>
+name = 'checkout'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+>               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'checkout'
+
+/usr/lib/python3.10/unittest/mock.py:643: AttributeError
+_________________ test_create_checkout_session_fallback_logic __________________
+
+    def test_create_checkout_session_fallback_logic():
+        """Test creating a checkout session using fallback logic (legacy settings)."""
+        with patch("app.services.billing_service.stripe", autospec=True) as mock_stripe:
+>           mock_stripe.checkout.Session.create.return_value = MagicMock()
+
+tests/test_billing_service.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <NonCallableMagicMock name='stripe' spec='module' id='138944974349040'>
+name = 'checkout'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+>               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'checkout'
+
+/usr/lib/python3.10/unittest/mock.py:643: AttributeError
+__________________________ test_create_portal_session __________________________
+
+    def test_create_portal_session():
+        """Test creating a billing portal session."""
+        with patch("app.services.billing_service.stripe", autospec=True) as mock_stripe:
+            mock_session = MagicMock()
+>           mock_stripe.billing_portal.Session.create.return_value = mock_session
+
+tests/test_billing_service.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <NonCallableMagicMock name='stripe' spec='module' id='138944866614720'>
+name = 'billing_portal'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+>               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'billing_portal'
+
+/usr/lib/python3.10/unittest/mock.py:643: AttributeError
+______________________ test_scripture_set_crud_lifecycle _______________________
+
+db = <sqlalchemy.orm.session.Session object at 0x7e5e9f43fa60>
+
+    def test_scripture_set_crud_lifecycle(db):
+        """Test full create, read, update, delete lifecycle for scripture sets."""
+    
+        # Create
+>       payload = ScriptureSetCreate(
+            name="Test Set",
+            verses={"john_3_16": "For God so loved..."}
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for ScriptureSetCreate
+E       verses.john_3_16
+E         Input should be a valid list [type=list_type, input_value='For God so loved...', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.12/v/list_type
+
+tests/test_denomination_service.py:68: ValidationError
+=============================== warnings summary ===============================
+tests/test_admin.py::test_update_user_invalid_role
+  /home/thunda/Dev/543_Tools/spiritual_gifts_backend/venv/lib/python3.10/site-packages/_pytest/python.py:166: DeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    result = testfunction(**testargs)
+
+tests/test_content_override.py::test_get_gifts_with_scripture_override
+  /home/thunda/Dev/543_Tools/spiritual_gifts_backend/app/services/content_service.py:34: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    denom = db.query(Denomination).get(org.denomination_id)
+
+tests/test_member_lifecycle.py::test_pending_member_cannot_access_analytics
+  /home/thunda/Dev/543_Tools/spiritual_gifts_backend/tests/test_member_lifecycle.py:36: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    u = db.query(User).get(user.id) # user is from outer scope?
+
+tests/test_member_lifecycle.py::test_approve_role_activation
+  /home/thunda/Dev/543_Tools/spiritual_gifts_backend/tests/test_member_lifecycle.py:97: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    updated_user = db.query(User).get(pending.id)
+
+tests/test_member_lifecycle.py::test_reject_data_leakage
+  /home/thunda/Dev/543_Tools/spiritual_gifts_backend/tests/test_member_lifecycle.py:136: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    rejected_user = db.query(User).get(pending.id)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.10.12-final-0 _______________
+
+Name                                   Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------
+app/__init__.py                            2      0   100%
+app/config.py                             20      0   100%
+app/database.py                           10      0   100%
+app/dev_auth.py                           17      0   100%
+app/limiter.py                            19      0   100%
+app/logging_setup.py                      52      0   100%
+app/main.py                              174     11    94%   68-85
+app/models.py                             93      0   100%
+app/neon_auth.py                         131      5    96%   276-277, 291-297
+app/routers/__init__.py                  101      1    99%   36
+app/routers/admin.py                     107     11    90%   41-42, 46, 118-119, 122, 165, 172-175
+app/routers/billing.py                   136     48    65%   30, 41-60, 70-85, 108-109, 127, 129, 131, 135, 144-147, 167-169, 181-199
+app/routers/denominations.py              77     15    81%   59, 63, 75, 78, 81-83, 95, 98, 113, 124, 136, 139, 150, 153
+app/routers/organizations.py             230     25    89%   75-77, 90, 97, 131, 229-230, 296, 336, 344, 377, 381, 384, 392, 421, 425, 429, 462, 474, 528, 565, 588, 623, 628, 642
+app/routers/preferences.py                79      2    97%   108, 144
+app/schemas.py                           188      7    96%   59, 89, 96-97, 102-103, 264
+app/services/__init__.py                   4      0   100%
+app/services/audit_service.py             10      0   100%
+app/services/auth_service.py              20      0   100%
+app/services/billing_service.py           23      4    83%   23-37, 42-46
+app/services/content_service.py           27      2    93%   36, 40
+app/services/denomination_service.py      50      0   100%
+app/services/entitlements.py              45      0   100%
+app/services/event_store.py               40      1    98%   26
+app/services/getJSONData.py               21      2    90%   11, 18
+app/services/survey_service.py           138      7    95%   85, 87, 253, 266, 316-319
+--------------------------------------------------------------------
+TOTAL                                   1814    141    92%
+=========================== short test summary info ============================
+FAILED tests/test_billing_service.py::test_create_checkout_session_valid_plan
+FAILED tests/test_billing_service.py::test_create_checkout_session_fallback_logic
+FAILED tests/test_billing_service.py::test_create_portal_session - AttributeE...
+FAILED tests/test_denomination_service.py::test_scripture_set_crud_lifecycle
+================== 4 failed, 212 passed, 5 warnings in 16.52s ==================
