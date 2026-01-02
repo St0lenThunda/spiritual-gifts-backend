@@ -2,10 +2,10 @@ from enum import Enum
 from typing import Dict, Any, Optional
 
 class Plan(str, Enum):
-    FREE = "free"
-    INDIVIDUAL = "individual"      # Was Starter
-    MINISTRY = "ministry"          # Was Growth
-    CHURCH = "church"              # Was Enterprise
+    INDIVIDUAL = "individual"      # Was Free (1 user)
+    FELLOWSHIP = "fellowship"      # Was Individual (50 users)
+    MINISTRY = "ministry"          # Was Ministry (100 users) -> User said "ministry to fellowship" but that merges. I am keeping this as Ministry or maybe Community? I will stick to Ministry to avoid merging unless explicit.
+    CHURCH = "church"              # Was Church (Unlimited)
 
 # Feature Constants
 FEATURE_USERS = "users"
@@ -30,23 +30,23 @@ SUPPORT_EMAIL = "email"
 SUPPORT_PRIORITY = "priority"
 
 # Theme Lists
-THEMES_FREE = ["light", "dark", "synthwave"]
-THEMES_INDIVIDUAL = ["light", "dark", "synthwave", "living-water", "doves-wing"]
+THEMES_INDIVIDUAL = ["light", "dark", "synthwave"]
+THEMES_FELLOWSHIP = ["light", "dark", "synthwave", "living-water", "doves-wing"]
 THEMES_MINISTRY = ["light", "dark", "synthwave", "living-water", "doves-wing", \
                    "celestial", "sacred"]
 THEMES_CHURCH = "all"  # All presets + custom designer
 
 TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
-    Plan.FREE: {
-        FEATURE_USERS: 10,
+    Plan.INDIVIDUAL: {
+        FEATURE_USERS: 1,
         FEATURE_ADMINS: 0,
         FEATURE_ASSESSMENTS_PER_MONTH: 20,
-        FEATURE_HISTORY_DAYS: 30,
+        FEATURE_HISTORY_DAYS: 60,
         FEATURE_EXPORTS: False,
         FEATURE_ORG_SUPPORT: False,
         FEATURE_CUSTOM_WEIGHTING: False,
         FEATURE_SUPPORT_LEVEL: SUPPORT_NONE,
-        FEATURE_AVAILABLE_THEMES: THEMES_FREE,
+        FEATURE_AVAILABLE_THEMES: THEMES_INDIVIDUAL,
         FEATURE_THEME_ANALYTICS: False,
         FEATURE_CUSTOM_ORG_THEMING: False,
         FEATURE_ANALYTICS: False,
@@ -54,16 +54,16 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_MANAGE_SUBSCRIPTION: False,
         FEATURE_BULK_ACTIONS: False
     },
-    Plan.INDIVIDUAL: {
+    Plan.FELLOWSHIP: {
         FEATURE_USERS: 50,
-        FEATURE_ADMINS: 1,
+        FEATURE_ADMINS: 2,
         FEATURE_ASSESSMENTS_PER_MONTH: 100,
         FEATURE_HISTORY_DAYS: 90,
         FEATURE_EXPORTS: False,
         FEATURE_ORG_SUPPORT: False,
         FEATURE_CUSTOM_WEIGHTING: False,
         FEATURE_SUPPORT_LEVEL: SUPPORT_EMAIL,
-        FEATURE_AVAILABLE_THEMES: THEMES_INDIVIDUAL,
+        FEATURE_AVAILABLE_THEMES: THEMES_FELLOWSHIP,
         FEATURE_THEME_ANALYTICS: False,
         FEATURE_CUSTOM_ORG_THEMING: False,
         FEATURE_ANALYTICS: False,
@@ -108,7 +108,7 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
 }
 
 LEGACY_PLAN_MAPPING = {
-    "starter": Plan.INDIVIDUAL,
+    "starter": Plan.FELLOWSHIP,
     "growth": Plan.MINISTRY,
     "enterprise": Plan.CHURCH
 }
@@ -116,7 +116,7 @@ LEGACY_PLAN_MAPPING = {
 def get_plan_features(plan_name: str) -> Dict[str, Any]:
     """Retrieve features for a given plan, defaulting to FREE if unknown."""
     if not plan_name:
-        return TIER_FEATURES[Plan.FREE]
+        return TIER_FEATURES[Plan.INDIVIDUAL]
 
     normalized_name = str(plan_name).lower()
     
@@ -127,7 +127,7 @@ def get_plan_features(plan_name: str) -> Dict[str, Any]:
         try:
             plan = Plan(normalized_name)
         except ValueError:
-            plan = Plan.FREE
+            plan = Plan.INDIVIDUAL
             
     return TIER_FEATURES[plan]
 

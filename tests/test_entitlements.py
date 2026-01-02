@@ -22,18 +22,18 @@ def test_get_plan_features_legacy():
 
 def test_get_plan_features_invalid():
     """Test fallback to FREE plan for invalid inputs."""
-    assert get_plan_features("unknown") == TIER_FEATURES[Plan.FREE]
-    assert get_plan_features(None) == TIER_FEATURES[Plan.FREE]
-    assert get_plan_features("") == TIER_FEATURES[Plan.FREE]
+    assert get_plan_features("unknown") == TIER_FEATURES[Plan.INDIVIDUAL]
+    assert get_plan_features(None) == TIER_FEATURES[Plan.INDIVIDUAL]
+    assert get_plan_features("") == TIER_FEATURES[Plan.INDIVIDUAL]
 
 def test_resolve_limit():
     """Test resolving specific limits."""
     # Known limit
-    limit = resolve_limit(Plan.FREE.value, "users")
-    assert limit == 10
+    limit = resolve_limit(Plan.INDIVIDUAL.value, "users")
+    assert limit == 1
     
     # Unknown feature (default 0)
-    limit = resolve_limit(Plan.FREE.value, "non_existent_feature")
+    limit = resolve_limit(Plan.INDIVIDUAL.value, "non_existent_feature")
     assert limit == 0
     
     # Legacy plan

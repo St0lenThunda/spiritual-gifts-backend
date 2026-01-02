@@ -93,11 +93,11 @@ def test_create_portal_session():
 def test_get_subscription_status():
     """Test getting simplified subscription status from org object."""
     mock_org = MagicMock()
-    mock_org.plan = "free"
+    mock_org.plan = "individual"
     mock_org.stripe_customer_id = None
     
     status = BillingService.get_subscription_status(mock_org)
-    assert status["plan"] == "free"
+    assert status["plan"] == "individual"
     assert status["status"] == "incomplete"
     assert "limits" in status
     
