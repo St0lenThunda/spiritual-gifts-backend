@@ -151,3 +151,19 @@ class ScriptureSet(Base):
 
     # Relationships
     denominations = relationship("Denomination", back_populates="scripture_set")
+
+class SurveyDraft(Base):
+    """Model for storing in-progress assessment drafts."""
+    __tablename__ = "survey_drafts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
+    answers = Column(JSON, default={}, nullable=False)
+    current_step = Column(Integer, default=1, nullable=False)
+    assessment_version = Column(String(20), default="1.0", nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", backref="survey_draft")
+    organization = relationship("Organization")

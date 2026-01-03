@@ -8,7 +8,7 @@ import pytest_asyncio
 @pytest.mark.asyncio
 async def test_super_admin_access_allowed_email():
     # User is admin AND allowed email
-    user = User(id=1, email="tonym415@gmail.com", role="admin")
+    user = User(id=1, email="tonym415@gmail.com", role="super_admin")
     
     result = await get_current_admin(user)
     assert result == user
@@ -17,7 +17,7 @@ async def test_super_admin_access_allowed_email():
 async def test_super_admin_access_allowed_org():
     # User is admin AND allowed org
     org = Organization(id="uuid", slug="neon-evangelion")
-    user = User(id=2, email="other@example.com", role="admin", organization=org)
+    user = User(id=2, email="other@example.com", role="super_admin", organization=org)
     
     result = await get_current_admin(user)
     assert result == user

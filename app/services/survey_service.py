@@ -141,6 +141,11 @@ class SurveyService:
             assessment_version=assessment_version
         )
         db.add(survey)
+        
+        # Clean up any existing draft
+        from .survey_draft_service import SurveyDraftService
+        SurveyDraftService.delete_draft(db, user)
+
         db.commit()
         db.refresh(survey)
         return survey
@@ -380,6 +385,10 @@ class SurveyService:
             # Mask demographics to protect individual identity in small sets
             gift_demographics = {} 
         
+        # Count in-progress drafts
+        from ..models import SurveyDraft
+        draft_count = db.query(SurveyDraft).filter(SurveyDraft.org_id == org_id).count()
+        
         return {
             "total_assessments": total_assessments,
             "active_members_count": active_members_count,
@@ -387,5 +396,6 @@ class SurveyService:
             "gift_averages": gift_averages,
             "top_gifts_distribution": sorted_distribution,
             "gift_demographics": gift_demographics,
-            "insufficient_data": insufficient_data
+            "insufficient_data": insufficient_data,
+            "in_progress_drafts": draft_count
         }

@@ -32,12 +32,12 @@ async def get_system_logs(
     """
     query = db.query(LogEntry)
     
-    # Org admins can only see logs from their organization's users
     # Super admins see all logs
-    allowed_emails = ["tonym415@gmail.com"]
-    allowed_org_slugs = ["neon-evangelion"]
-    is_super_admin = current_admin.email in allowed_emails
+    is_super_admin = current_admin.role == "super_admin"
+    
     if not is_super_admin and current_admin.organization:
+        # Fallback for Neon Evangelion org members (Legacy)
+        allowed_org_slugs = ["neon-evangelion"]
         if current_admin.organization.slug in allowed_org_slugs:
             is_super_admin = True
     
@@ -109,12 +109,12 @@ async def list_all_users(
     """
     query = db.query(User)
     
-    # Org admins can only see users from their organization
     # Super admins see all users
-    allowed_emails = ["tonym415@gmail.com"]
-    allowed_org_slugs = ["neon-evangelion"]
-    is_super_admin = current_admin.email in allowed_emails
+    is_super_admin = current_admin.role == "super_admin"
+    
     if not is_super_admin and current_admin.organization:
+        # Fallback for Neon Evangelion org members (Legacy)
+        allowed_org_slugs = ["neon-evangelion"]
         if current_admin.organization.slug in allowed_org_slugs:
             is_super_admin = True
     

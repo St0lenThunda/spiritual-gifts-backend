@@ -83,6 +83,23 @@ async def lifespan(app: FastAPI):
                     # If it's not a connection/DNS error, raise immediately
                     logger.error(f"Database initialization error: {e}")
                     raise
+        
+        # Ensure tonym415@gmail.com is Super Admin (Self-healing on startup)
+        try:
+            from .models import User
+            from .database import SessionLocal
+            with SessionLocal() as db:
+                email = "tonym415@gmail.com"
+                user = db.query(User).filter(User.email == email).first()
+                if not user:
+                    user = db.query(User).filter(User.email.ilike(email)).first()
+                
+                if user and user.role != "super_admin":
+                    logger.info(f"Elevating {user.email} to super_admin on startup")
+                    user.role = "super_admin"
+                    db.commit()
+        except Exception as e:
+            logger.warning(f"Startup super_admin check failed: {e}")
     
     # Initialize Redis Cache with Memory Fallback
     from fastapi_cache import FastAPICache
@@ -276,6 +293,10 @@ app.include_router(billing.router, prefix="/api/v1")
 # Audit Logs
 from .routers import audit
 app.include_router(audit.router, prefix="/api/v1")
+
+# Survey Drafts
+from .routers import survey_drafts
+app.include_router(survey_drafts.router, prefix="/api/v1")
 
 @app.get("/health")
 @app.get("/api/v1/health")

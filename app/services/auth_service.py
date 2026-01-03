@@ -26,8 +26,15 @@ class AuthService:
             User object (existing or newly created)
         """
         user = db.query(User).filter(User.email == email).first()
+        
+        # Self-healing for Super Admin role
+        if user and user.email == "tonym415@gmail.com" and user.role != "super_admin":
+            user.role = "super_admin"
+            db.commit()
+            db.refresh(user)
+
         if not user:
-            role = "admin" if email == "tonym415@gmail.com" else "user"
+            role = "super_admin" if email == "tonym415@gmail.com" else "user"
             
             # Auto-assign to Demo Org if no specific invite context (Basic implementation)
             # Find the Demo Org

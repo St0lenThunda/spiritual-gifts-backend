@@ -1,19 +1,27 @@
 import pytest
 from fastapi import status
-from app.models import User, LogEntry
+from app.models import User, LogEntry, Organization
 from app.neon_auth import create_access_token
 
 @pytest.fixture
-def admin_user(db):
-    user = User(email="tonym415@gmail.com", role="admin")
+def test_org(db):
+    org = Organization(name="Test Org", slug="test-org", plan="ministry", is_active=True)
+    db.add(org)
+    db.commit()
+    db.refresh(org)
+    return org
+
+@pytest.fixture
+def admin_user(db, test_org):
+    user = User(email="tonym415@gmail.com", role="admin", org_id=test_org.id, membership_status="active")
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
 
 @pytest.fixture
-def regular_user(db):
-    user = User(email="user@example.com", role="user")
+def regular_user(db, test_org):
+    user = User(email="user@example.com", role="user", org_id=test_org.id, membership_status="active")
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -27,9 +35,9 @@ def admin_token(admin_user):
 def user_token(regular_user):
     return create_access_token(data={"sub": str(regular_user.id), "email": regular_user.email, "role": regular_user.role})
 
-def test_get_logs_as_admin(client, admin_token, db):
+def test_get_logs_as_admin(client, admin_token, db, test_org):
     # Add a mock log
-    log = LogEntry(level="INFO", event="test_event", user_email="test@example.com")
+    log = LogEntry(level="INFO", event="test_event", user_email="test@example.com", org_id=test_org.id)
     db.add(log)
     db.commit()
 
@@ -43,10 +51,10 @@ def test_get_logs_as_admin(client, admin_token, db):
     assert len(data["items"]) >= 1
     assert data["items"][0]["event"] == "test_event"
 
-def test_get_logs_filtering(client, admin_token, db):
+def test_get_logs_filtering(client, admin_token, db, test_org):
     # Add logs with different levels
-    db.add(LogEntry(level="INFO", event="info_event", user_email="user1@example.com"))
-    db.add(LogEntry(level="ERROR", event="error_event", user_email="user2@example.com"))
+    db.add(LogEntry(level="INFO", event="info_event", user_email="user1@example.com", org_id=test_org.id))
+    db.add(LogEntry(level="ERROR", event="error_event", user_email="user2@example.com", org_id=test_org.id))
     db.commit()
 
     # Filter by level
@@ -77,9 +85,9 @@ def test_get_logs_filtering(client, admin_token, db):
     items = data["items"]
     assert all("info" in d["event"].lower() for d in items)
 
-def test_get_logs_sorting(client, admin_token, db):
-    db.add(LogEntry(level="INFO", event="a_event", user_email="a@example.com"))
-    db.add(LogEntry(level="INFO", event="z_event", user_email="z@example.com"))
+def test_get_logs_sorting(client, admin_token, db, test_org):
+    db.add(LogEntry(level="INFO", event="a_event", user_email="a@example.com", org_id=test_org.id))
+    db.add(LogEntry(level="INFO", event="z_event", user_email="z@example.com", org_id=test_org.id))
     db.commit()
 
     # Sort by event ASC
@@ -146,10 +154,13 @@ def test_admin_routes_unauthorized(client):
         response = client.get(route)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-def test_get_schema_as_admin(client, admin_token):
+def test_get_schema_as_admin(client, admin_user, db):
+    # Schema endpoint requires super_admin
+    token = create_access_token(data={"sub": str(admin_user.id), "email": admin_user.email, "role": "super_admin"})
+    
     response = client.get(
         "/api/v1/admin/schema",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == status.HTTP_200_OK
     data = response.json()

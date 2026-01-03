@@ -30,7 +30,7 @@ class UserResponse(BaseModel):
     """User response schema."""
     id: int = Field(..., description="Unique internal user ID")
     email: str = Field(..., description="User's verified email address")
-    role: str = Field("user", description="User's role (user or admin)")
+    role: str = Field("user", description="User's role (user, admin, or super_admin)")
     org_id: Optional[UUID] = Field(None, description="Organization ID affiliation")
     membership_status: str = Field("active", description="Status within the organization (pending or active)")
     global_preferences: Dict[str, Any] = Field(default_factory=dict, description="User's global preferences")
@@ -41,15 +41,15 @@ class UserResponse(BaseModel):
 
 class UserUpdate(BaseModel):
     """Schema for updating a user (admins only)."""
-    role: Optional[str] = Field(None, description="User's role (user or admin)")
+    role: Optional[str] = Field(None, description="User's role (user, admin, or super_admin)")
     org_id: Optional[UUID] = Field(None, description="Organization ID affiliation")
     membership_status: Optional[str] = Field(None, description="Status within the organization (pending or active)")
 
     @field_validator("role")
     @classmethod
     def validate_role(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in ["user", "admin"]:
-            raise ValueError("Role must be 'user' or 'admin'")
+        if v is not None and v not in ["user", "admin", "super_admin"]:
+            raise ValueError("Role must be 'user', 'admin', or 'super_admin'")
         return v
 
     @field_validator("membership_status")
@@ -243,25 +243,25 @@ class OrganizationResponse(BaseModel):
 class OrganizationMemberInvite(BaseModel):
     """Schema for inviting a member to an organization."""
     email: EmailStr = Field(..., description="Email address of the person to invite")
-    role: str = Field("user", description="Role to assign (user or admin)")
+    role: str = Field("user", description="Role to assign (user, admin, or super_admin)")
 
     @field_validator("role")
     @classmethod
     def validate_role(cls, v: str) -> str:
-        if v not in ["user", "admin"]:
-            raise ValueError("Role must be 'user' or 'admin'")
+        if v not in ["user", "admin", "super_admin"]:
+            raise ValueError("Role must be 'user', 'admin', or 'super_admin'")
         return v
 
 
 class OrganizationMemberUpdate(BaseModel):
     """Schema for updating an existing organization member."""
-    role: Optional[str] = Field(None, description="Role to assign (user or admin)")
+    role: Optional[str] = Field(None, description="Role to assign (user, admin, or super_admin)")
 
     @field_validator("role")
     @classmethod
     def validate_role(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in ["user", "admin"]:
-            raise ValueError("Role must be 'user' or 'admin'")
+        if v is not None and v not in ["user", "admin", "super_admin"]:
+            raise ValueError("Role must be 'user', 'admin', or 'super_admin'")
         return v
 
 
@@ -295,3 +295,20 @@ class ThemeAnalytics(BaseModel):
     total_users: int
     theme_distribution: List[Dict[str, Any]]
     org_has_custom_theme: bool
+
+class SurveyDraftCreate(BaseModel):
+    """Schema for creating/updating an assessment draft."""
+    answers: Dict[str, int] = Field(default_factory=dict, description="Partial answers map")
+    current_step: int = Field(1, ge=1, description="Current question index")
+    assessment_version: str = Field("1.0", description="Version of the assessment")
+
+class SurveyDraftResponse(BaseModel):
+    """Schema for returning assessment draft info."""
+    user_id: int
+    org_id: Optional[UUID] = None
+    answers: Dict[str, int]
+    current_step: int
+    assessment_version: str
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

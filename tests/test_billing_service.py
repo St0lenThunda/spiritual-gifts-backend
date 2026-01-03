@@ -5,7 +5,7 @@ from app.config import settings
 
 def test_create_checkout_session_valid_plan():
     """Test creating a checkout session with a valid plan name from settings dict."""
-    with patch("app.services.billing_service.stripe", autospec=True) as mock_stripe:
+    with patch("app.services.billing_service.stripe") as mock_stripe:
         mock_session = MagicMock()
         mock_stripe.checkout.Session.create.return_value = mock_session
         
@@ -26,7 +26,7 @@ def test_create_checkout_session_valid_plan():
 
 def test_create_checkout_session_fallback_logic():
     """Test creating a checkout session using fallback logic (legacy settings)."""
-    with patch("app.services.billing_service.stripe", autospec=True) as mock_stripe:
+    with patch("app.services.billing_service.stripe") as mock_stripe:
         mock_stripe.checkout.Session.create.return_value = MagicMock()
         
         # Ensure dict is empty to trigger fallback
@@ -78,7 +78,7 @@ def test_create_checkout_session_invalid_plan():
 
 def test_create_portal_session():
     """Test creating a billing portal session."""
-    with patch("app.services.billing_service.stripe", autospec=True) as mock_stripe:
+    with patch("app.services.billing_service.stripe") as mock_stripe:
         mock_session = MagicMock()
         mock_stripe.billing_portal.Session.create.return_value = mock_session
         

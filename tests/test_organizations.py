@@ -10,8 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.main import app
 from app.models import Organization, User
-from app.neon_auth import require_org, UserContext
-from app.routers.organizations import get_current_user
+from app.neon_auth import require_org, UserContext, get_user_context
 
 
 client = TestClient(app)
@@ -298,6 +297,7 @@ class TestAuthenticatedEndpoints:
         app.dependency_overrides[get_current_user] = lambda: mock_user
         app.dependency_overrides[get_db] = lambda: mock_db
         app.dependency_overrides[require_org] = lambda: mock_org
+        app.dependency_overrides[get_user_context] = lambda: UserContext(user=mock_user, organization=mock_org, role=mock_user.role)
         
         yield mock_user, mock_org, mock_db
         

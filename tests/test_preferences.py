@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from app.database import Base, get_db
 from app.main import app
 from app.models import User, Organization
-from app.services.entitlements import THEMES_FREE, THEMES_INDIVIDUAL, THEMES_MINISTRY
+from app.services.entitlements import THEMES_INDIVIDUAL, THEMES_MINISTRY
 import uuid
 
 # Test database setup
@@ -355,7 +355,7 @@ class TestTierEntitlements:
         app.dependency_overrides[get_current_user] = override_auth(user)
         
         # Can select free tier themes
-        for theme in THEMES_FREE:
+        for theme in THEMES_INDIVIDUAL:
             response = client.patch("/api/v1/user/preferences", json={"theme": theme})
             assert response.status_code == 200, f"Failed for theme {theme}: {response.json()}"
         
