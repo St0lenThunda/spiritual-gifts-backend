@@ -93,10 +93,10 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_AUDIT_LOGS: True
     },
     Plan.CHURCH: {
-        FEATURE_USERS: float('inf'),
-        FEATURE_ADMINS: float('inf'),
-        FEATURE_ASSESSMENTS_PER_MONTH: float('inf'),
-        FEATURE_HISTORY_DAYS: float('inf'),
+        FEATURE_USERS: 1000000,
+        FEATURE_ADMINS: 1000000,
+        FEATURE_ASSESSMENTS_PER_MONTH: 1000000,
+        FEATURE_HISTORY_DAYS: 1000000,
         FEATURE_EXPORTS: True,
         FEATURE_ORG_SUPPORT: True,
         FEATURE_CUSTOM_WEIGHTING: True,
