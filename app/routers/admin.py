@@ -95,6 +95,7 @@ async def get_system_logs(
 async def list_all_users(
     role: str = None,
     email: str = None,
+    org_id: str = None,
     sort_by: str = "id",
     order: str = "asc",
     page: int = 1,
@@ -126,6 +127,13 @@ async def list_all_users(
         query = query.filter(User.role == role.lower())
     if email:
         query = query.filter(User.email.ilike(f"%{email}%"))
+    if org_id and is_super_admin:
+        from uuid import UUID
+        try:
+            org_uuid = UUID(org_id)
+            query = query.filter(User.org_id == org_uuid)
+        except ValueError:
+            pass  # Invalid UUID, ignore filter
         
     # Sorting
     if order.lower() == "desc":
@@ -244,3 +252,219 @@ async def get_db_schema(current_admin: User = Depends(get_current_admin), db: Se
                 mermaid_lines.append(f"    {target_table} ||--o{{ {table_name} : \"{column.name}\"")
 
     return {"mermaid": "\n".join(mermaid_lines)}
+
+# ============================================================================
+# Organization Management (Super Admin Only)
+# ============================================================================
+
+@router.get("/organizations")
+async def list_all_organizations(
+    sort_by: str = "name",
+    order: str = "asc",
+    page: int = 1,
+    limit: int = 25,
+    plan: str = None,
+    is_active: str = None,
+    search: str = None,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    List all organizations in the system with sorting, filtering, and pagination.
+    Only accessible by super administrators.
+    """
+    query = db.query(Organization)
+    
+    # Filtering
+    if plan:
+        query = query.filter(Organization.plan == plan)
+    if is_active is not None and is_active != '':
+        query = query.filter(Organization.is_active == (is_active.lower() == 'true'))
+    if search:
+        query = query.filter(
+            (Organization.name.ilike(f"%{search}%")) | 
+            (Organization.slug.ilike(f"%{search}%"))
+        )
+    
+    # Sorting
+    if order.lower() == "desc":
+        sort_attr = getattr(Organization, sort_by).desc()
+    else:
+        sort_attr = getattr(Organization, sort_by).asc()
+    
+    # Calculate totals
+    total = query.count()
+    pages = (total + limit - 1) // limit
+    
+    # Pagination
+    offset = (page - 1) * limit
+    orgs = query.order_by(sort_attr).offset(offset).limit(limit).all()
+    
+    # Convert to dict with member counts
+    items = []
+    for org in orgs:
+        member_count = db.query(User).filter(User.org_id == org.id).count()
+        items.append({
+            "id": str(org.id),
+            "name": org.name,
+            "slug": org.slug,
+            "plan": org.plan,
+            "is_active": org.is_active,
+            "is_demo": org.is_demo,
+            "member_count": member_count,
+            "created_at": org.created_at.isoformat() if org.created_at else None,
+            "updated_at": org.updated_at.isoformat() if org.updated_at else None,
+            "stripe_customer_id": org.stripe_customer_id
+        })
+    
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": pages
+    }
+
+@router.get("/organizations/{org_id}")
+async def get_organization_details(
+    org_id: str,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Get detailed information about a single organization.
+    Only accessible by super administrators.
+    """
+    from uuid import UUID
+    try:
+        org_uuid = UUID(org_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid organization ID")
+    
+    org = db.query(Organization).filter(Organization.id == org_uuid).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    member_count = db.query(User).filter(User.org_id == org.id).count()
+    
+    result = {
+        "id": str(org.id),
+        "name": org.name,
+        "slug": org.slug,
+        "plan": org.plan,
+        "is_active": org.is_active,
+        "is_demo": org.is_demo,
+        "member_count": member_count,
+        "created_at": org.created_at.isoformat() if org.created_at else None,
+        "updated_at": org.updated_at.isoformat() if org.updated_at else None,
+        "stripe_customer_id": org.stripe_customer_id,
+        "denomination": None
+    }
+    
+    # Include denomination if present
+    if org.denomination:
+        result["denomination"] = {
+            "id": str(org.denomination.id),
+            "display_name": org.denomination.display_name,
+            "slug": org.denomination.slug,
+            "default_currency": org.denomination.default_currency
+        }
+    
+    return result
+
+
+@router.post("/organizations")
+async def create_organization(
+    org_data: schemas.OrganizationCreate,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new organization.
+    Only accessible by super administrators.
+    """
+    # Check if slug is already taken
+    existing = db.query(Organization).filter(Organization.slug == org_data.slug).first()
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Organization with slug '{org_data.slug}' already exists"
+        )
+    
+    org = Organization(
+        name=org_data.name,
+        slug=org_data.slug,
+        plan="free"
+    )
+    db.add(org)
+    db.commit()
+    db.refresh(org)
+    
+    AuditService.log_action(
+        db=db,
+        user=current_admin,
+        action="admin_create_org",
+        target_type="organization",
+        target_id=str(org.id),
+        details={"name": org.name, "slug": org.slug}
+    )
+    
+    return {
+        "id": str(org.id),
+        "name": org.name,
+        "slug": org.slug,
+        "plan": org.plan,
+        "is_active": org.is_active,
+        "created_at": org.created_at.isoformat() if org.created_at else None
+    }
+
+@router.patch("/organizations/{org_id}")
+async def update_organization(
+    org_id: str,
+    org_data: schemas.OrganizationUpdate,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Update an organization.
+    Only accessible by super administrators.
+    """
+    from uuid import UUID
+    try:
+        org_uuid = UUID(org_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid organization ID")
+    
+    org = db.query(Organization).filter(Organization.id == org_uuid).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    if org_data.name is not None:
+        org.name = org_data.name
+    if org_data.branding is not None:
+        org.branding = org_data.branding
+    if hasattr(org_data, 'plan') and org_data.plan is not None:
+        org.plan = org_data.plan
+    if hasattr(org_data, 'is_active') and org_data.is_active is not None:
+        org.is_active = org_data.is_active
+    
+    db.commit()
+    db.refresh(org)
+    
+    AuditService.log_action(
+        db=db,
+        user=current_admin,
+        action="admin_update_org",
+        target_type="organization",
+        target_id=str(org.id),
+        details=org_data.model_dump(exclude_unset=True)
+    )
+    
+    return {
+        "id": str(org.id),
+        "name": org.name,
+        "slug": org.slug,
+        "plan": org.plan,
+        "is_active": org.is_active,
+        "updated_at": org.updated_at.isoformat() if org.updated_at else None
+    }
