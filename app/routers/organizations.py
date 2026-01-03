@@ -686,13 +686,4 @@ async def bulk_reject_members(
         traceback.print_exc()
         raise e
 
-@router.get("/fix-schema-now")
-async def fix_schema_endpoint(db: Session = Depends(get_db)):
-    from sqlalchemy import text
-    try:
-        # Postage-stamp fix
-        db.execute(text("ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS details JSONB;"))
-        db.commit()
-        return {"message": "Schema fixed!"}
-    except Exception as e:
-        return {"error": str(e)}
+
