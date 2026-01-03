@@ -32,17 +32,21 @@ async def get_audit_logs(
     
     # 1. Determine Access Level
     is_super_admin = False
+    is_admin = False
     
-    # Check for Super Admin Role (Refactor from hardcoded list)
+    # Check for Roles
     if current_user.role == "super_admin":
         is_super_admin = True
+    elif current_user.role == "admin":
+        is_admin = True
     
-    # Keep Organization-based Super Admin for Neon Evangelion (if needed, or deprecate?)
-    # User asked to "move to a super_admin role".
-    # I will keep the Org check as a fallback for the "neon-evangelion" org members if that logic is still desired, 
-    # but primarily rely on the Role.
-    elif current_user.organization and current_user.organization.slug == "neon-evangelion":
+    # Check for System Admin logic for Neon Evangelion (if needed)
+    if not is_super_admin and current_user.organization and current_user.organization.slug == "neon-evangelion":
         is_super_admin = True
+        
+    # Enforce Role-Based Access: Only admins and super admins can view logs
+    if not is_super_admin and not is_admin:
+        raise HTTPException(status_code=403, detail="Only administrators can view audit logs")
         
     # 2. Enforce Entitlement (unless super admin)
     if not is_super_admin:
