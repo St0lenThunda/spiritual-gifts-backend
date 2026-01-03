@@ -113,6 +113,7 @@ class AuditLog(Base):
     org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     action = Column(String(100), nullable=False)
     resource = Column(String(255), nullable=False)
+    details = Column(JSON, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships

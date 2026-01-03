@@ -23,6 +23,7 @@ FEATURE_ANALYTICS = "analytics"
 FEATURE_BRANDING = "branding"
 FEATURE_MANAGE_SUBSCRIPTION = "manage_subscription"
 FEATURE_BULK_ACTIONS = "bulk_actions"
+FEATURE_AUDIT_LOGS = "audit_logs"
 
 # Support Levels
 SUPPORT_NONE = "none"
@@ -52,7 +53,8 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_ANALYTICS: False,
         FEATURE_BRANDING: False,
         FEATURE_MANAGE_SUBSCRIPTION: False,
-        FEATURE_BULK_ACTIONS: False
+        FEATURE_BULK_ACTIONS: False,
+        FEATURE_AUDIT_LOGS: False
     },
     Plan.FELLOWSHIP: {
         FEATURE_USERS: 50,
@@ -69,7 +71,8 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_ANALYTICS: False,
         FEATURE_BRANDING: False,
         FEATURE_MANAGE_SUBSCRIPTION: True,
-        FEATURE_BULK_ACTIONS: False
+        FEATURE_BULK_ACTIONS: False,
+        FEATURE_AUDIT_LOGS: False
     },
     Plan.MINISTRY: {
         FEATURE_USERS: 100,
@@ -86,7 +89,8 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_ANALYTICS: True,
         FEATURE_BRANDING: True,
         FEATURE_MANAGE_SUBSCRIPTION: True,
-        FEATURE_BULK_ACTIONS: True
+        FEATURE_BULK_ACTIONS: True,
+        FEATURE_AUDIT_LOGS: True
     },
     Plan.CHURCH: {
         FEATURE_USERS: float('inf'),
@@ -103,7 +107,8 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_ANALYTICS: True,
         FEATURE_BRANDING: True,
         FEATURE_MANAGE_SUBSCRIPTION: True,
-        FEATURE_BULK_ACTIONS: True
+        FEATURE_BULK_ACTIONS: True,
+        FEATURE_AUDIT_LOGS: True
     }
 }
 

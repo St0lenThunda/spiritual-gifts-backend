@@ -351,8 +351,6 @@ async def join_organization(
     current_user.membership_status = "pending"
     current_user.role = "user"
     
-    db.commit()
-    
     AuditService.log_action(
         db=db,
         user=current_user,
@@ -361,6 +359,8 @@ async def join_organization(
         target_id=str(org.id),
         details={"slug": slug}
     )
+    
+    db.commit()
     
     return {"message": f"Join request sent to {org.name}", "status": "pending"}
 
@@ -395,8 +395,6 @@ async def approve_member(
         )
 
     user.membership_status = "active"
-    db.commit()
-    
     AuditService.log_action(
         db=db,
         user=current_user,
@@ -405,6 +403,8 @@ async def approve_member(
         target_id=str(user.id),
         details={"email": user.email}
     )
+    
+    db.commit()
     
     return {"message": f"User {user.email} approved"}
 
@@ -432,7 +432,9 @@ async def reject_member(
     user.membership_status = "active" # Reset for their next attempt/standalone use
     user.role = "user"
     
-    db.commit()
+    user.org_id = None
+    user.membership_status = "active" # Reset for their next attempt/standalone use
+    user.role = "user"
     
     AuditService.log_action(
         db=db,
@@ -442,6 +444,8 @@ async def reject_member(
         target_id=str(user.id),
         details={"email": user.email}
     )
+    
+    db.commit()
     
     return {"message": f"User {user.email} removed/rejected"}
 
@@ -499,6 +503,22 @@ async def get_member_assessments(
             "top_score": top_score
         })
     
+    result = []
+    for assessment in assessments:
+        scores = assessment.scores or {}
+        # Filter out 'overall' before finding max
+        valid_scores = {k: v for k, v in scores.items() if k.lower() != 'overall'}
+        top_gift = max(valid_scores, key=valid_scores.get) if valid_scores else None
+        top_score = valid_scores.get(top_gift, 0) if top_gift else 0
+        
+        result.append({
+            "id": assessment.id,
+            "created_at": assessment.created_at,
+            "scores": scores,
+            "top_gift": top_gift,
+            "top_score": top_score
+        })
+    
     return {
         "member": {
             "id": member.id,
@@ -534,9 +554,6 @@ async def update_organization_member(
     if member_data.role:
         user.role = member_data.role
         
-    db.commit()
-    db.refresh(user)
-    
     AuditService.log_action(
         db=db,
         user=current_user,
@@ -549,6 +566,9 @@ async def update_organization_member(
         },
         level="INFO"
     )
+
+    db.commit()
+    db.refresh(user)
     
     return user
 
@@ -618,42 +638,61 @@ async def bulk_reject_members(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Reject multiple members."""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can manage members")
-    
-    # Tier Check
-    features = get_plan_features(org.plan)
-    if not features.get(FEATURE_BULK_ACTIONS, False):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Bulk actions are not available on the {org.plan} plan. Please upgrade to use this feature."
-        )
-
-    users = db.query(User).filter(
-        User.id.in_(action.user_ids), 
-        User.org_id == org.id
-    ).all()
-    
-    rejected_count = 0
-    for user in users:
-        # Prevent self-rejection
-        if user.id == current_user.id:
-            continue
-            
-        user.org_id = None
-        user.membership_status = "active"
-        user.role = "user"
-        rejected_count += 1
+    try:
+        if current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Only admins can manage members")
         
-        AuditService.log_action(
-            db=db,
-            user=current_user,
-            action="reject_member",
-            target_type="user",
-            target_id=str(user.id),
-            details={"email": user.email, "bulk": True}
-        )
-    
-    db.commit()
-    return {"message": f"Successfully removed/rejected {rejected_count} members", "rejected_count": rejected_count}
+        # Tier Check
+        features = get_plan_features(org.plan)
+        if not features.get(FEATURE_BULK_ACTIONS, False):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Bulk actions are not available on the {org.plan} plan. Please upgrade to use this feature."
+            )
+
+        users = db.query(User).filter(
+            User.id.in_(action.user_ids), 
+            User.org_id == org.id
+        ).all()
+        
+        rejected_count = 0
+        for user in users:
+            # Prevent self-rejection
+            if user.id == current_user.id:
+                continue
+                
+            user.org_id = None
+            user.membership_status = "active"
+            user.role = "user"
+            rejected_count += 1
+            
+            AuditService.log_action(
+                db=db,
+                user=current_user,
+                action="reject_member",
+                target_type="user",
+                target_id=str(user.id),
+                details={"email": user.email, "bulk": True}
+            )
+        
+        db.commit()
+        return {"message": f"Successfully removed/rejected {rejected_count} members", "rejected_count": rejected_count}
+    except Exception as e:
+        import sys
+        # print error type
+        print(f"!!! BULK REJECT ERROR TYPE: {type(e)}", file=sys.stderr)
+        print(f"!!! BULK REJECT ERROR: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        raise e
+
+@router.get("/fix-schema-now")
+async def fix_schema_endpoint(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    try:
+        # Postage-stamp fix
+        db.execute(text("ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS details JSONB;"))
+        db.commit()
+        return {"message": "Schema fixed!"}
+    except Exception as e:
+        return {"error": str(e)}
