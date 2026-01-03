@@ -372,11 +372,20 @@ class SurveyService:
             for k, v in sorted(trends.items())
         ]
         
+        # Privacy & Anonymity Logic (ADR-018)
+        MIN_ANONYMITY_THRESHOLD = 5
+        insufficient_data = total_assessments < MIN_ANONYMITY_THRESHOLD
+        
+        if insufficient_data:
+            # Mask demographics to protect individual identity in small sets
+            gift_demographics = {} 
+        
         return {
             "total_assessments": total_assessments,
             "active_members_count": active_members_count,
             "assessments_trend": trends_list,
             "gift_averages": gift_averages,
             "top_gifts_distribution": sorted_distribution,
-            "gift_demographics": gift_demographics
+            "gift_demographics": gift_demographics,
+            "insufficient_data": insufficient_data
         }

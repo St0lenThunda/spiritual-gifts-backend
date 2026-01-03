@@ -58,3 +58,35 @@ def test_get_org_analytics_trends():
     
     assert curr_trend["count"] == 2
     assert last_trend["count"] == 1
+
+def test_get_org_analytics_privacy_threshold():
+    # Setup
+    mock_db = MagicMock()
+    org_id = "test-org-id"
+    
+    # Case 1: Insufficient Data (3 surveys)
+    surveys_low = [
+        Survey(user_id=i, org_id=org_id, scores={"A": 10}, created_at=datetime.utcnow())
+        for i in range(3)
+    ]
+    mock_db.query.return_value.filter.return_value.all.return_value = surveys_low
+    
+    analytics_low = SurveyService.get_org_analytics(mock_db, org_id)
+    assert analytics_low["total_assessments"] == 3
+    assert analytics_low["insufficient_data"] is True
+    assert analytics_low["gift_demographics"] == {} # Should be masked
+    
+    # Case 2: Sufficient Data (5 surveys)
+    surveys_ok = [
+        Survey(user_id=i, org_id=org_id, scores={"A": 10}, created_at=datetime.utcnow(), user=User(role="user"))
+        for i in range(5)
+    ]
+    mock_db.query.return_value.filter.return_value.all.return_value = surveys_ok
+    
+    analytics_ok = SurveyService.get_org_analytics(mock_db, org_id)
+    assert analytics_ok["total_assessments"] == 5
+    assert analytics_ok["insufficient_data"] is False
+    # Check that demographics are NOT empty (assuming setup populated them)
+    # The current mock setup for user might allow demographics logic to run
+    # (top gift "A", role "user")
+    assert "A" in analytics_ok["gift_demographics"]

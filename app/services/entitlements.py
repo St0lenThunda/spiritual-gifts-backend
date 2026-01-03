@@ -72,7 +72,7 @@ TIER_FEATURES: Dict[Plan, Dict[str, Any]] = {
         FEATURE_BRANDING: False,
         FEATURE_MANAGE_SUBSCRIPTION: True,
         FEATURE_BULK_ACTIONS: False,
-        FEATURE_AUDIT_LOGS: False
+        FEATURE_AUDIT_LOGS: True
     },
     Plan.MINISTRY: {
         FEATURE_USERS: 100,

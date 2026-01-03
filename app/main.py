@@ -273,6 +273,10 @@ app.include_router(preferences.router, prefix="/api/v1")
 from .routers import billing
 app.include_router(billing.router, prefix="/api/v1")
 
+# Audit Logs
+from .routers import audit
+app.include_router(audit.router, prefix="/api/v1")
+
 @app.get("/health")
 @app.get("/api/v1/health")
 async def health(check_external: bool = False):

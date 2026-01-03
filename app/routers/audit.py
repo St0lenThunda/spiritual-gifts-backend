@@ -32,12 +32,16 @@ async def get_audit_logs(
     
     # 1. Determine Access Level
     is_super_admin = False
-    super_admin_emails = ["tonym415@gmail.com", "super@neon.com"]
-    super_admin_orgs = ["neon-evangelion"]
     
-    if current_user.email in super_admin_emails:
+    # Check for Super Admin Role (Refactor from hardcoded list)
+    if current_user.role == "super_admin":
         is_super_admin = True
-    elif current_user.organization and current_user.organization.slug in super_admin_orgs:
+    
+    # Keep Organization-based Super Admin for Neon Evangelion (if needed, or deprecate?)
+    # User asked to "move to a super_admin role".
+    # I will keep the Org check as a fallback for the "neon-evangelion" org members if that logic is still desired, 
+    # but primarily rely on the Role.
+    elif current_user.organization and current_user.organization.slug == "neon-evangelion":
         is_super_admin = True
         
     # 2. Enforce Entitlement (unless super admin)

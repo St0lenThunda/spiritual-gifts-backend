@@ -226,30 +226,19 @@ async def get_current_admin(
     Raises:
         HTTPException: If the user is not an admin
     """
-    allowed_emails = ["tonym415@gmail.com"]
-    allowed_org_slugs = ["neon-evangelion"]
-    
-    # Check 1: Must be an admin role
-    if current_user.role != "admin":
-        logger.warning("unauthorized_admin_access", user_id=current_user.id, user_email=current_user.email, reason="role_not_admin")
+    # Role‑based Super Admin check
+    # Users with role "super_admin" are allowed regardless of email or org.
+    if current_user.role != "super_admin":
+        logger.warning(
+            "unauthorized_super_admin_access",
+            user_id=current_user.id,
+            user_email=current_user.email,
+            reason="role_not_super_admin",
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Administrative privileges required"
+            detail="System Administrator privileges required",
         )
-        
-    # Check 2: Must be a Super Admin (specific email or specific org)
-    is_super_admin = current_user.email in allowed_emails
-    if not is_super_admin and current_user.organization:
-         if current_user.organization.slug in allowed_org_slugs:
-             is_super_admin = True
-             
-    if not is_super_admin:
-        logger.warning("unauthorized_super_admin_access", user_id=current_user.id, user_email=current_user.email, org_id=current_user.org_id)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="System Administrator privileges required"
-        )
-        
     return current_user
 
 async def get_org_admin(
@@ -267,31 +256,27 @@ async def get_org_admin(
     """
     user = context.user
     
-    # Super admins always have access
-    allowed_emails = ["tonym415@gmail.com"]
-    allowed_org_slugs = ["neon-evangelion"]
-    
-    is_super_admin = user.email in allowed_emails
-    if not is_super_admin and user.organization:
-        if user.organization.slug in allowed_org_slugs:
-            is_super_admin = True
-    
-    if is_super_admin:
+    # Role‑based Super Admin check
+    if user.role == "super_admin":
         return user
     
-    # Check if user is an org admin
+    # Fallback: organization admin (role "admin")
     if user.role != "admin":
-        logger.warning("unauthorized_admin_access", user_id=user.id, user_email=user.email, reason="role_not_admin")
+        logger.warning(
+            "unauthorized_admin_access",
+            user_id=user.id,
+            user_email=user.email,
+            reason="role_not_admin",
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Administrative privileges required"
+            detail="Administrative privileges required",
         )
     
-    # Org admin must belong to an organization
     if not context.organization:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Organization membership required for admin access"
+            detail="Organization membership required for admin access",
         )
     
     return user
