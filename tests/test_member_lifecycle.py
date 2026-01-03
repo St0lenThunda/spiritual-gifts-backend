@@ -8,7 +8,7 @@ client = TestClient(app)
 
 def test_pending_member_cannot_access_analytics(db, client):
     # 1. Setup Data
-    org = Organization(name="Lifecycle Org", slug="lifecycle-org", plan="free")
+    org = Organization(name="Lifecycle Org", slug="lifecycle-org", plan="fellowship")
     db.add(org)
     db.commit()
     
@@ -33,7 +33,7 @@ def test_pending_member_cannot_access_analytics(db, client):
 
     def mock_get_context():
         # Refresh to ensure relationships are accessible in this session
-        u = db.query(User).get(user.id) # user is from outer scope?
+        u = db.get(User, user.id)
         # Actually user is 'user' variable above.
         # But 'db' fixture is function scoped.
         
@@ -60,7 +60,7 @@ def test_pending_member_cannot_access_analytics(db, client):
 
 def test_approve_role_activation(db, client):
     # 1. Setup
-    org = Organization(name="Approve Org", slug="approve-org")
+    org = Organization(name="Approve Org", slug="approve-org", plan="fellowship")
     db.add(org)
     
     # Create Admin
@@ -94,7 +94,7 @@ def test_approve_role_activation(db, client):
     # 3. Verify
     assert response.status_code == 200, response.json()
     db.expire_all()
-    updated_user = db.query(User).get(pending.id)
+    updated_user = db.get(User, pending.id)
     assert updated_user.membership_status == "active"
 
 def test_reject_data_leakage(db, client):
@@ -133,7 +133,7 @@ def test_reject_data_leakage(db, client):
     
     # 3. Verify
     db.expire_all()
-    rejected_user = db.query(User).get(pending.id)
+    rejected_user = db.get(User, pending.id)
     # Reject implementation sets org_id=None, status="active" (reset)
     assert rejected_user.org_id is None
     assert rejected_user.membership_status == "active"

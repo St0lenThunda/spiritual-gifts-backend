@@ -9,7 +9,7 @@ def test_organization_member_invite_invalid_role():
     """Cover app/schemas.py:132"""
     with pytest.raises(ValueError) as exc:
         OrganizationMemberInvite(email="test@example.com", role="superadmin")
-    assert "Role must be 'user' or 'admin'" in str(exc.value)
+    assert "Role must be 'user', 'admin', or 'super_admin'" in str(exc.value)
 
 def test_survey_service_get_user_surveys_with_org_id(db):
     """Cover app/services/survey_service.py:129"""

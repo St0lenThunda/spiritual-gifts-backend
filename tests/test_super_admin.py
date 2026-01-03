@@ -43,4 +43,4 @@ async def test_denied_non_admin_role():
         await get_current_admin(user)
         
     assert excinfo.value.status_code == 403
-    assert "Administrative privileges required" in excinfo.value.detail
+    assert "System Administrator privileges required" in excinfo.value.detail

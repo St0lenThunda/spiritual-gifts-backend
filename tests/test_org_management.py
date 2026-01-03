@@ -6,7 +6,7 @@ import uuid
 
 @pytest.fixture
 def org_admin(db):
-    org = Organization(name="Test Church", slug="test-church")
+    org = Organization(name="Test Church", slug="test-church", plan="fellowship")
     db.add(org)
     db.commit()
     db.refresh(org)

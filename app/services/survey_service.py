@@ -266,13 +266,18 @@ class SurveyService:
                 )
             ).all()
         
+        # Count in-progress drafts
+        from ..models import SurveyDraft
+        draft_count = db.query(SurveyDraft).filter(SurveyDraft.org_id == org_id).count()
+
         total_assessments = len(surveys)
         if total_assessments == 0:
             return {
                 "total_assessments": 0,
                 "gift_averages": {},
                 "top_gifts_distribution": {},
-                "gift_demographics": {}
+                "gift_demographics": {},
+                "in_progress_drafts": draft_count
             }
             
         # Initialize accumulators
@@ -385,9 +390,7 @@ class SurveyService:
             # Mask demographics to protect individual identity in small sets
             gift_demographics = {} 
         
-        # Count in-progress drafts
-        from ..models import SurveyDraft
-        draft_count = db.query(SurveyDraft).filter(SurveyDraft.org_id == org_id).count()
+
         
         return {
             "total_assessments": total_assessments,

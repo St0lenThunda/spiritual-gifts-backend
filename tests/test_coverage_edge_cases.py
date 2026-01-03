@@ -41,7 +41,7 @@ async def test_get_current_admin_not_admin():
     with pytest.raises(HTTPException) as excinfo:
         await get_current_admin(user)
     assert excinfo.value.status_code == status.HTTP_403_FORBIDDEN
-    assert "Administrative privileges required" in excinfo.value.detail
+    assert "System Administrator privileges required" in excinfo.value.detail
 
 def test_db_logger_processor_exception():
     # Patch the SessionLocal used within the logging_setup module

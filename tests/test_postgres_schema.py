@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy import text
 from app.database import engine
 
+@pytest.mark.skipif("sqlite" in str(engine.url), reason="Postgres schema check skipped on SQLite")
 def test_audit_logs_schema_postgres():
     print(f"Connecting to: {engine.url}")
     

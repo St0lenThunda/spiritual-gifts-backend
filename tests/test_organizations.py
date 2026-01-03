@@ -41,7 +41,7 @@ def mock_org():
     org.id = uuid.uuid4()
     org.name = "Test Church"
     org.slug = "test-church"
-    org.plan = "free"
+    org.plan = "fellowship"
     org.is_active = True
     org.stripe_customer_id = None
     org.branding = {}

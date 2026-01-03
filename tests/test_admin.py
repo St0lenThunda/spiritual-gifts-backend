@@ -13,7 +13,7 @@ def test_org(db):
 
 @pytest.fixture
 def admin_user(db, test_org):
-    user = User(email="tonym415@gmail.com", role="admin", org_id=test_org.id, membership_status="active")
+    user = User(email="tonym415@gmail.com", role="super_admin", org_id=test_org.id, membership_status="active")
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -202,4 +202,4 @@ def test_update_user_invalid_role(client, admin_token, regular_user):
         json={"role": "super-god"},
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT

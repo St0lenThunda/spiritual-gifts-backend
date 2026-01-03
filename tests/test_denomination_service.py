@@ -67,7 +67,7 @@ def test_scripture_set_crud_lifecycle(db):
     # Create
     payload = ScriptureSetCreate(
         name="Test Set",
-        verses={"john_3_16": "For God so loved..."}
+        verses={"teaching": ["Romans 12:7"]}
     )
     ss = create_scripture_set(db, payload)
     assert ss.id is not None
@@ -76,7 +76,7 @@ def test_scripture_set_crud_lifecycle(db):
     # Read (By ID)
     fetched = get_scripture_set(db, ss.id)
     assert fetched.name == "Test Set"
-    assert fetched.verses["john_3_16"] == "For God so loved..."
+    assert fetched.verses["teaching"][0] == "Romans 12:7"
     
     # Read (List)
     all_sets = list_scripture_sets(db)
@@ -86,11 +86,11 @@ def test_scripture_set_crud_lifecycle(db):
     # Update
     update_payload = ScriptureSetCreate(
         name="Updated Set",
-        verses={"gen_1_1": "In the beginning"}
+        verses={"mercy": ["Matthew 5:7"]}
     )
     updated = update_scripture_set(db, ss, update_payload)
     assert updated.name == "Updated Set"
-    assert "gen_1_1" in updated.verses
+    assert "mercy" in updated.verses
     
     # Delete
     delete_scripture_set(db, updated)

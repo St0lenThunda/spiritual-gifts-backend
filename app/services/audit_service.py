@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
+from fastapi.encoders import jsonable_encoder
 from app.models import LogEntry, User, AuditLog
 
 class AuditService:
@@ -14,6 +15,7 @@ class AuditService:
         details: Optional[Dict[str, Any]] = None,
         level: str = "INFO"
     ):
+        safe_details = jsonable_encoder(details) if details else {}
         # Create user-facing AuditLog
         audit = AuditLog(
             timestamp=datetime.utcnow(),
@@ -21,7 +23,7 @@ class AuditService:
             org_id=user.org_id, 
             action=action,
             resource=f"{target_type}:{target_id}",
-            details=details or {}  # Note: AuditLog model in models.py doesn't have details column shown in Step 2194??
+            details=safe_details
             # Let me re-check model definition in Step 2194 lines 104-121.
             # It has: actor_id, org_id, action, resource, timestamp.
             # It DOES NOT HAVE 'details' column!
@@ -88,7 +90,7 @@ class AuditService:
             user_id=user.id,
             user_email=user.email,
             org_id=user.org_id,
-            context=details or {},
+            context=safe_details,
             path="audit_service", # Generic path
             method="AUDIT"
         )

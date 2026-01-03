@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from app.services.audit_service import AuditService
-from app.models import LogEntry, User
+from app.models import LogEntry, User, AuditLog
 
 def test_log_action_creates_entry():
     """Test that log_action creates a LogEntry with correct data."""
@@ -20,10 +20,10 @@ def test_log_action_creates_entry():
         details={"foo": "bar"}
     )
 
-    assert isinstance(entry, LogEntry)
-    assert entry.event == "test_action"
-    assert entry.user_id == 1
-    assert entry.context == {"foo": "bar"}
-    assert entry.path == "audit:test_target:999"
+    assert isinstance(entry, AuditLog)
+    assert entry.action == "test_action"
+    assert entry.actor_id == 1
+    assert entry.details == {"foo": "bar"}
+    assert entry.resource == "test_target:999"
     
-    mock_db.add.assert_called_once_with(entry)
+    assert mock_db.add.call_count == 2

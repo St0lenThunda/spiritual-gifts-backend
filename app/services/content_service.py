@@ -31,7 +31,7 @@ class ContentService:
             return gifts
         
         # 3. Load Scripture Set provided by Denomination
-        denom = db.query(Denomination).get(org.denomination_id)
+        denom = db.get(Denomination, org.denomination_id)
         if not denom or not denom.scripture_set:
             return gifts
 
