@@ -3,13 +3,11 @@ API routers for the Spiritual Gifts Assessment application.
 """
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, Header
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Any
 from datetime import datetime
 from fastapi_cache.decorator import cache
 from fastapi_cache.coder import JsonCoder
-from fastapi_csrf_protect import CsrfProtect
 import json
-from typing import Any
 
 from ..neon_auth import (
     neon_send_magic_link, 
@@ -36,24 +34,6 @@ class SafeJsonCoder(JsonCoder):
         return super().decode(value)
 
 # ============================================================================
-# Security Routes
-# ============================================================================
-
-@router.get("/csrf-token")
-async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
-    """
-    Endpoint to provide a CSRF token for SPAs.
-    """
-    from fastapi.responses import JSONResponse
-    csrf_token, signed_token = csrf_protect.generate_csrf_tokens()
-    
-    logger.info("csrf_token_requested", samesite=settings.csrf_settings.cookie_samesite, secure=settings.csrf_settings.cookie_secure)
-    
-    response = JSONResponse(content={"detail": "CSRF cookie set", "csrf_token": csrf_token})
-    csrf_protect.set_csrf_cookie(signed_token, response)
-    return response
-
-# ============================================================================
 # Authentication Routes
 # ============================================================================
 
@@ -61,8 +41,7 @@ async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
 @limiter.limit("100/10minutes")
 async def send_magic_link(
     request: Request, 
-    login_data: schemas.LoginRequest,
-    csrf_protect: CsrfProtect = Depends()
+    login_data: schemas.LoginRequest
 ):
     """
     Send a magic link to the user's email for passwordless authentication.
@@ -74,51 +53,16 @@ async def send_magic_link(
     Returns:
         Success message
     """
-    if settings.CSRF_ENABLED:
-        await csrf_protect.validate_csrf(request)
-    
     await neon_send_magic_link(login_data.email)
     logger.info("magic_link_sent", user_email=login_data.email)
     return {"message": "Magic link sent successfully", "email": login_data.email}
-
-@router.post("/auth/debug-csrf")
-async def debug_csrf(
-    request: Request,
-    csrf_protect: CsrfProtect = Depends()
-):
-    """
-    Debug endpoint to inspect CSRF state and request context.
-    Always returns context, status depends on settings.CSRF_ENABLED.
-    """
-    is_valid = True
-    error = None
-    try:
-        if settings.CSRF_ENABLED:
-            await csrf_protect.validate_csrf(request)
-    except Exception as e:
-        is_valid = False
-        error = str(e)
-    
-    headers = {k: v for k, v in request.headers.items() if k.lower() in ["x-csrf-token", "origin", "referer", "cookie"]}
-    cookies = {k: "present" for k in request.cookies.keys()}
-    
-    return {
-        "csrf_enabled": settings.CSRF_ENABLED,
-        "csrf_valid": is_valid,
-        "csrf_error": error,
-        "headers": headers,
-        "cookies": cookies,
-        "env": settings.ENV,
-        "client_ip": request.client.host if request.client else "unknown"
-    }
 
 @router.post("/auth/verify", response_model=schemas.Token)
 async def verify_magic_link(
     request: schemas.TokenVerifyRequest, 
     response: Response,
     fastapi_request: Request,
-    db: Session = Depends(get_db),
-    csrf_protect: CsrfProtect = Depends()
+    db: Session = Depends(get_db)
 ):
     """
     Verify the magic link token and return a JWT access token.
@@ -131,8 +75,6 @@ async def verify_magic_link(
     Returns:
         JWT access token
     """
-    if settings.CSRF_ENABLED:
-        await csrf_protect.validate_csrf(fastapi_request)
     # Verify the magic link with Neon Auth
     neon_response = await neon_verify_magic_link(request.token)
     
@@ -239,8 +181,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 async def logout(
     request: Request, 
     response: Response,
-    current_user: User = Depends(get_current_user),
-    csrf_protect: CsrfProtect = Depends()
+    current_user: User = Depends(get_current_user)
 ):
     """
     Logout the current user by clearing the access token cookie.
@@ -252,7 +193,6 @@ async def logout(
     Returns:
         Success message
     """
-    await csrf_protect.validate_csrf(request)
     is_dev = settings.ENV == "development"
     response.delete_cookie(
         key="access_token",
@@ -273,8 +213,7 @@ async def submit_survey(
     survey_data: schemas.SurveyCreate,
     request: Request,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    csrf_protect: CsrfProtect = Depends()
+    db: Session = Depends(get_db)
 ):
     """
     Submit a new survey for the authenticated user.
@@ -287,7 +226,6 @@ async def submit_survey(
     Returns:
         Created survey object
     """
-    await csrf_protect.validate_csrf(request)
     survey = SurveyService.create_survey(
         db=db,
         user=current_user,

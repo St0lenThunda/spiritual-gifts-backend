@@ -11,8 +11,6 @@ from .logging_setup import setup_logging, logger, path_ctx, method_ctx, user_id_
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from fastapi import Request, Response, Depends
-from fastapi_csrf_protect import CsrfProtect
-from fastapi_csrf_protect.exceptions import CsrfProtectError
 from starlette.middleware.base import BaseHTTPMiddleware
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -38,10 +36,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
         response.headers["Content-Security-Policy"] = csp
         return response
-
-@CsrfProtect.load_config
-def get_csrf_config():
-    return settings.csrf_settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -202,29 +196,6 @@ async def logging_middleware(request, call_next):
             content=content,
             headers={"X-Request-ID": request_id}
         )
-@app.exception_handler(CsrfProtectError)
-async def csrf_protect_exception_handler(request: Request, exc: CsrfProtectError):
-    """
-    Handle CSRF violations by returning 403 Forbidden.
-    """
-    # Capture headers and cookies for debugging cross-site issues
-    headers = {k: v for k, v in request.headers.items() if k.lower() in ["x-csrf-token", "origin", "referer", "cookie"]}
-    cookies = list(request.cookies.keys())
-    
-    logger.warning(
-        "csrf_violation",
-        client_ip=request.client.host if request.client else "unknown",
-        path=request.url.path,
-        error=exc.message,
-        headers=headers,
-        cookies=cookies
-    )
-    from fastapi.responses import JSONResponse
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": "CSRF validation failed. Please refresh and try again."}
-    )
-
 # CSRF token endpoint moved to routers/__init__.py
 
 async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
