@@ -17,7 +17,7 @@ from .models import User, Organization
 from .logging_setup import user_id_ctx, user_email_ctx, logger
 
 # Neon Auth configuration
-NEON_AUTH_URL = "https://auth.neon.tech"
+NEON_AUTH_URL = settings.NEON_AUTH_URL.rstrip('/')
 NEON_PROJECT_ID = settings.NEON_PROJECT_ID
 NEON_API_KEY = settings.NEON_API_KEY
 
