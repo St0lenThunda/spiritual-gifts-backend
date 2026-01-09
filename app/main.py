@@ -39,16 +39,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Content-Security-Policy"] = csp
         return response
 
-from pydantic_settings import BaseSettings
-class CsrfSettings(BaseSettings):
-    secret_key: str = settings.CSRF_SECRET_KEY
-    cookie_samesite: str = "lax" if settings.ENV == "development" else "none"
-    cookie_secure: bool = False if settings.ENV == "development" else True
-    cookie_httponly: bool = False  # Allow frontend to read for header inclusion
-
 @CsrfProtect.load_config
 def get_csrf_config():
-    return CsrfSettings()
+    return settings.csrf_settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

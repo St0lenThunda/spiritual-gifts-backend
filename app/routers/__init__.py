@@ -55,7 +55,7 @@ async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
 # ============================================================================
 
 @router.post("/auth/send-link")
-@limiter.limit("10/10minutes")
+@limiter.limit("30/10minutes")
 async def send_magic_link(
     request: Request, 
     login_data: schemas.LoginRequest,
@@ -75,6 +75,35 @@ async def send_magic_link(
     await neon_send_magic_link(login_data.email)
     logger.info("magic_link_sent", user_email=login_data.email)
     return {"message": "Magic link sent successfully", "email": login_data.email}
+
+@router.post("/auth/debug-csrf")
+async def debug_csrf(
+    request: Request,
+    csrf_protect: CsrfProtect = Depends()
+):
+    """
+    Debug endpoint to inspect CSRF state and request context.
+    Does not raise on validation failure but returns the state.
+    """
+    is_valid = True
+    error = None
+    try:
+        await csrf_protect.validate_csrf(request)
+    except Exception as e:
+        is_valid = False
+        error = str(e)
+    
+    headers = {k: v for k, v in request.headers.items() if k.lower() in ["x-csrf-token", "origin", "referer", "cookie"]}
+    cookies = {k: "present" for k in request.cookies.keys()}
+    
+    return {
+        "csrf_valid": is_valid,
+        "csrf_error": error,
+        "headers": headers,
+        "cookies": cookies,
+        "env": settings.ENV,
+        "client_ip": request.client.host if request.client else "unknown"
+    }
 
 @router.post("/auth/verify", response_model=schemas.Token)
 async def verify_magic_link(
