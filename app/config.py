@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     NEON_API_KEY: str
     NEON_PROJECT_ID: str
     NEON_AUTH_URL: str = "https://auth.neon.tech"
+    NEON_AUTH_VERIFY_SSL: bool = True
     
     # Security Configuration
     JWT_SECRET_KEY: str = "your-secret-key-change-in-production-please-use-a-strong-random-key"

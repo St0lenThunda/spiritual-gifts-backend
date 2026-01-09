@@ -316,9 +316,9 @@ async def neon_send_magic_link(email: str, headers: Optional[dict] = None):
         if "referer" in headers:
             api_headers["referer"] = headers["referer"]
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=settings.NEON_AUTH_VERIFY_SSL) as client:
         try:
-            logger.info("neon_auth_attempt", email=email, url=NEON_AUTH_URL)
+            logger.info("neon_auth_attempt", email=email, url=NEON_AUTH_URL, verify_ssl=settings.NEON_AUTH_VERIFY_SSL)
             r = await client.post(
                 f"{NEON_AUTH_URL}/auth/v1/otp",
                 json={"email": email, "create_user": True},
