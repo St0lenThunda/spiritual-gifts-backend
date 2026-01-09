@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     # CSRF Settings
     CSRF_COOKIE_SAMESITE: str = "lax"
     CSRF_COOKIE_SECURE: bool = False
+    CSRF_ENABLED: bool = True
     
     @property
     def csrf_settings(self):

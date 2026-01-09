@@ -46,6 +46,9 @@ async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
     """
     from fastapi.responses import JSONResponse
     csrf_token, signed_token = csrf_protect.generate_csrf_tokens()
+    
+    logger.info("csrf_token_requested", samesite=settings.csrf_settings.cookie_samesite, secure=settings.csrf_settings.cookie_secure)
+    
     response = JSONResponse(content={"detail": "CSRF cookie set", "csrf_token": csrf_token})
     csrf_protect.set_csrf_cookie(signed_token, response)
     return response
@@ -55,7 +58,7 @@ async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
 # ============================================================================
 
 @router.post("/auth/send-link")
-@limiter.limit("30/10minutes")
+@limiter.limit("100/10minutes")
 async def send_magic_link(
     request: Request, 
     login_data: schemas.LoginRequest,
@@ -71,7 +74,9 @@ async def send_magic_link(
     Returns:
         Success message
     """
-    await csrf_protect.validate_csrf(request)
+    if settings.CSRF_ENABLED:
+        await csrf_protect.validate_csrf(request)
+    
     await neon_send_magic_link(login_data.email)
     logger.info("magic_link_sent", user_email=login_data.email)
     return {"message": "Magic link sent successfully", "email": login_data.email}
@@ -83,12 +88,13 @@ async def debug_csrf(
 ):
     """
     Debug endpoint to inspect CSRF state and request context.
-    Does not raise on validation failure but returns the state.
+    Always returns context, status depends on settings.CSRF_ENABLED.
     """
     is_valid = True
     error = None
     try:
-        await csrf_protect.validate_csrf(request)
+        if settings.CSRF_ENABLED:
+            await csrf_protect.validate_csrf(request)
     except Exception as e:
         is_valid = False
         error = str(e)
@@ -97,6 +103,7 @@ async def debug_csrf(
     cookies = {k: "present" for k in request.cookies.keys()}
     
     return {
+        "csrf_enabled": settings.CSRF_ENABLED,
         "csrf_valid": is_valid,
         "csrf_error": error,
         "headers": headers,
@@ -124,7 +131,8 @@ async def verify_magic_link(
     Returns:
         JWT access token
     """
-    await csrf_protect.validate_csrf(fastapi_request)
+    if settings.CSRF_ENABLED:
+        await csrf_protect.validate_csrf(fastapi_request)
     # Verify the magic link with Neon Auth
     neon_response = await neon_verify_magic_link(request.token)
     
