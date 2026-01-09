@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     NEON_API_KEY: str
     NEON_PROJECT_ID: str
-    NEON_AUTH_URL: str = "https://auth.silent-unit-86239189.us-east-1.aws.neon.tech"
+    NEON_AUTH_URL: str = "https://auth.neon.tech"
     
     # Security Configuration
     JWT_SECRET_KEY: str = "your-secret-key-change-in-production-please-use-a-strong-random-key"

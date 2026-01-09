@@ -317,22 +317,38 @@ async def neon_send_magic_link(email: str, headers: Optional[dict] = None):
             api_headers["referer"] = headers["referer"]
 
     async with httpx.AsyncClient() as client:
-        r = await client.post(
-            f"{NEON_AUTH_URL}/auth/v1/otp",
-            json={"email": email, "create_user": True},
-            headers=api_headers,
-        )
         try:
+            logger.info("neon_auth_attempt", email=email, url=NEON_AUTH_URL)
+            r = await client.post(
+                f"{NEON_AUTH_URL}/auth/v1/otp",
+                json={"email": email, "create_user": True},
+                headers=api_headers,
+                timeout=10.0
+            )
             r.raise_for_status()
+            logger.info("neon_auth_success", email=email)
+            return r.json()
+        except httpx.ConnectError as e:
+            logger.error(
+                "neon_connection_failed",
+                error=str(e),
+                url=NEON_AUTH_URL,
+                email=email,
+                suggestion="Check if DNS can resolve the host from this environment"
+            )
+            raise
         except httpx.HTTPStatusError as e:
             logger.error(
                 "neon_magic_link_failed", 
                 status_code=r.status_code, 
                 response_body=r.text,
-                user_email=email
+                user_email=email,
+                url=NEON_AUTH_URL
             )
             raise
-        return r.json()
+        except Exception as e:
+            logger.error("neon_unexpected_error", error=str(e), type=type(e).__name__)
+            raise
 
 async def neon_verify_magic_link(token: str):
     """
