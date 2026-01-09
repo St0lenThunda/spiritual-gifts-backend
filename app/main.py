@@ -123,7 +123,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Spiritual Gifts Assessment API",
     description="Backend service for user authentication (Magic Links) and spiritual gifts assessment processing.",
-    version="1.3.0",
+    version="1.10.0",
     lifespan=lifespan
 )
 

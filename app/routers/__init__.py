@@ -53,7 +53,9 @@ async def send_magic_link(
     Returns:
         Success message
     """
-    await neon_send_magic_link(login_data.email)
+    # Pass client headers (Origin/Referer) so Neon can generate correct callback links
+    client_headers = {k.lower(): v for k, v in request.headers.items()}
+    await neon_send_magic_link(login_data.email, headers=client_headers)
     logger.info("magic_link_sent", user_email=login_data.email)
     return {"message": "Magic link sent successfully", "email": login_data.email}
 

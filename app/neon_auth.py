@@ -304,23 +304,34 @@ async def neon_signup(email: str):
         r.raise_for_status()
         return r.json()
 
-async def neon_send_magic_link(email: str):
+async def neon_send_magic_link(email: str, headers: Optional[dict] = None):
     """
     Send a magic link to the user's email via Neon Auth.
-    
-    Args:
-        email: User's email address
-        
-    Returns:
-        Neon Auth response
     """
+    api_headers = {"apikey": NEON_API_KEY}
+    if headers:
+        # Pass through Origin and Referer which Neon might need for link generation
+        if "origin" in headers:
+            api_headers["origin"] = headers["origin"]
+        if "referer" in headers:
+            api_headers["referer"] = headers["referer"]
+
     async with httpx.AsyncClient() as client:
         r = await client.post(
             f"{NEON_AUTH_URL}/auth/v1/otp",
             json={"email": email, "create_user": True},
-            headers={"apikey": NEON_API_KEY},
+            headers=api_headers,
         )
-        r.raise_for_status()
+        try:
+            r.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            logger.error(
+                "neon_magic_link_failed", 
+                status_code=r.status_code, 
+                response_body=r.text,
+                user_email=email
+            )
+            raise
         return r.json()
 
 async def neon_verify_magic_link(token: str):

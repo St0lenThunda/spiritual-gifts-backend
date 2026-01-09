@@ -12,7 +12,6 @@ from ..models import Organization
 from ..services.event_store import is_event_processed, mark_event_processed
 from ..services.billing_service import BillingService
 from ..neon_auth import get_current_user, require_org
-from fastapi_csrf_protect import CsrfProtect
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +34,8 @@ async def create_checkout_session(
     plan: str,
     request: Request,
     org: Organization = Depends(require_org),
-    csrf_protect: CsrfProtect = Depends()
 ):
     """Create a Stripe checkout session."""
-    await csrf_protect.validate_csrf(request)
     
     # Use referer as base for return URLs or settings
     base_url = str(request.base_url).rstrip('/')
@@ -64,10 +61,8 @@ async def create_checkout_session(
 async def create_portal_session(
     request: Request,
     org: Organization = Depends(require_org),
-    csrf_protect: CsrfProtect = Depends()
 ):
     """Create a Stripe customer portal session."""
-    await csrf_protect.validate_csrf(request)
     
     if not org.stripe_customer_id:
         raise HTTPException(status_code=400, detail="No Stripe customer found for this organization")
