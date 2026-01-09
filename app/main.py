@@ -214,11 +214,17 @@ async def csrf_protect_exception_handler(request: Request, exc: CsrfProtectError
     """
     Handle CSRF violations by returning 403 Forbidden.
     """
+    # Capture headers and cookies for debugging cross-site issues
+    headers = {k: v for k, v in request.headers.items() if k.lower() in ["x-csrf-token", "origin", "referer", "cookie"]}
+    cookies = list(request.cookies.keys())
+    
     logger.warning(
         "csrf_violation",
         client_ip=request.client.host if request.client else "unknown",
         path=request.url.path,
-        error=exc.message
+        error=exc.message,
+        headers=headers,
+        cookies=cookies
     )
     from fastapi.responses import JSONResponse
     return JSONResponse(

@@ -55,7 +55,7 @@ async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
 # ============================================================================
 
 @router.post("/auth/send-link")
-@limiter.limit("3/10minutes")
+@limiter.limit("10/10minutes")
 async def send_magic_link(
     request: Request, 
     login_data: schemas.LoginRequest,
