@@ -115,7 +115,7 @@ async def update_my_organization(
     Update the current organization.
     Only admins can update organization details.
     """
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only organization admins can update organization details"
@@ -373,10 +373,17 @@ async def approve_member(
     db: Session = Depends(get_db)
 ):
     """Approve a pending member."""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can approve members")
+    if current_user.role not in ("admin", "super_admin"):
+        raise HTTPException(status_code=403, detail="Only admins can manage members")
     
-    user = db.query(User).filter(User.id == user_id, User.org_id == org.id).first()
+    # Bypass org check for super admin if needed, but normally super admins 
+    # should be operating on a specific org context.
+    # For now, let's just allow the role.
+    
+    user = db.query(User).filter(User.id == user_id)
+    if current_user.role != "super_admin":
+        user = user.filter(User.org_id == org.id)
+    user = user.first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found in this organization")
     
@@ -417,14 +424,18 @@ async def reject_member(
     db: Session = Depends(get_db)
 ):
     """Reject a pending member or remove an active member."""
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Only admins can manage members")
     
-    user = db.query(User).filter(User.id == user_id, User.org_id == org.id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found in this organization")
+    user = db.query(User).filter(User.id == user_id)
+    if current_user.role != "super_admin":
+        user = user.filter(User.org_id == org.id)
+    user = user.first()
     
-    # If rejecting their own request or removing self (handled by separate leave logic usually, but here for admin)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # If rejecting their own request or removing self
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="Cannot reject/remove yourself")
 
@@ -461,18 +472,19 @@ async def get_member_assessments(
     Get assessment history for a specific organization member.
     Only admins can access member assessment data.
     """
-    # Verify current user is an admin
-    if current_user.role != "admin":
+    # Verify current user is an admin or super admin
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only organization admins can view member assessments"
         )
     
-    # Verify the member belongs to the same organization
-    member = db.query(User).filter(
-        User.id == member_id,
-        User.org_id == org.id
-    ).first()
+    # Verify the member belongs to the same organization (bypass for super_admin)
+    query = db.query(User).filter(User.id == member_id)
+    if current_user.role != "super_admin":
+        query = query.filter(User.org_id == org.id)
+    
+    member = query.first()
     
     if not member:
         raise HTTPException(
@@ -543,13 +555,17 @@ async def update_organization_member(
     Update a member's role within the organization.
     Only accessible by organization administrators.
     """
-    # Ensure current user is an admin of this org
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only organization admins can update members")
+    # Ensure current user is an admin or super admin
+    if current_user.role not in ("admin", "super_admin"):
+        raise HTTPException(status_code=403, detail="Only administrators can update members")
         
-    user = db.query(User).filter(User.id == user_id, User.org_id == org.id).first()
+    user = db.query(User).filter(User.id == user_id)
+    if current_user.role != "super_admin":
+        user = user.filter(User.org_id == org.id)
+    user = user.first()
+    
     if not user:
-        raise HTTPException(status_code=404, detail="Member not found in your organization")
+        raise HTTPException(status_code=404, detail="Member not found")
         
     if member_data.role:
         user.role = member_data.role
@@ -581,33 +597,33 @@ async def bulk_approve_members(
     db: Session = Depends(get_db)
 ):
     """Approve multiple pending members."""
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Only admins can approve members")
     
-    # Tier Check
+    # Tier Check (bypass for super admin)
     features = get_plan_features(org.plan)
-    
-    if not features.get(FEATURE_BULK_ACTIONS, False):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Bulk actions are not available on the {org.plan} plan. Please upgrade to use this feature."
-        )
+    if current_user.role != "super_admin":
+        if not features.get(FEATURE_BULK_ACTIONS, False):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Bulk actions are not available on the {org.plan} plan. Please upgrade to use this feature."
+            )
 
     max_users = features.get(FEATURE_USERS, 10)
     current_active_count = db.query(User).filter(User.org_id == org.id, User.membership_status == "active").count()
-    
     available_slots = max_users - current_active_count
     
-    users = db.query(User).filter(
-        User.id.in_(action.user_ids), 
-        User.org_id == org.id,
-        User.membership_status == "pending"
-    ).all()
+    # Bypass org check for super admin
+    query = db.query(User).filter(User.id.in_(action.user_ids))
+    if current_user.role != "super_admin":
+        query = query.filter(User.org_id == org.id)
+    
+    users = query.filter(User.membership_status == "pending").all()
     
     if not users:
         return {"message": "No pending members found to approve", "approved_count": 0}
     
-    if len(users) > available_slots:
+    if current_user.role != "super_admin" and len(users) > available_slots:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Tier limit reached. You only have {available_slots} slots available, but tried to approve {len(users)} users."
@@ -639,7 +655,7 @@ async def bulk_reject_members(
     db: Session = Depends(get_db)
 ):
     try:
-        if current_user.role != "admin":
+        if current_user.role not in ("admin", "super_admin"):
             raise HTTPException(status_code=403, detail="Only admins can manage members")
         
         # Tier Check
