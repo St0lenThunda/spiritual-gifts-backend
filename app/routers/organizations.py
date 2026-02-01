@@ -214,7 +214,7 @@ async def invite_member(
     Invite a new member to the organization.
     Only admins can invite members.
     """
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only organization admins can invite members"

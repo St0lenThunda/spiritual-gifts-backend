@@ -55,7 +55,7 @@ def create_new_denomination(
     db: Session = Depends(get_db),
 ):
     """Create a new denomination (admin only)."""
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can create denominations")
     # Ensure slug is unique
     existing = get_denomination_by_slug(db, payload.slug)
@@ -71,7 +71,7 @@ def update_existing_denomination(
     db: Session = Depends(get_db),
 ):
     """Update a denomination (admin only)."""
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can update denominations")
     denom = get_denomination_by_slug(db, slug)
     if not denom:
@@ -91,7 +91,7 @@ def delete_existing_denomination(
     db: Session = Depends(get_db),
 ):
     """Delete a denomination (admin only)."""
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can delete denominations")
     denom = get_denomination_by_slug(db, slug)
     if not denom:
@@ -120,7 +120,7 @@ def create_new_scripture_set(
     db: Session = Depends(get_db),
 ):
     """Create a new scripture set (admin only)."""
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can create scripture sets")
     return create_scripture_set(db, payload)
 
@@ -132,7 +132,7 @@ def update_existing_scripture_set(
     db: Session = Depends(get_db),
 ):
     """Update a scripture set (admin only)."""
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can update scripture sets")
     ss = get_scripture_set(db, set_id)
     if not ss:
@@ -146,7 +146,7 @@ def delete_existing_scripture_set(
     db: Session = Depends(get_db),
 ):
     """Delete a scripture set (admin only)."""
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can delete scripture sets")
     ss = get_scripture_set(db, set_id)
     if not ss:

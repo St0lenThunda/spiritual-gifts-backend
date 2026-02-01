@@ -137,7 +137,7 @@ async def get_theme_analytics(
     Get theme preference analytics for the current organization.
     Only accessible to Ministry/Church tier admins.
     """
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Admin access required")
     
     if not current_user.organization:
