@@ -13,7 +13,7 @@ Or from the backend directory:
 import sys
 import os
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 # Add parent directory to path if running as script
 if __name__ == "__main__":
@@ -158,8 +158,8 @@ def seed_database():
                         email=member_data["email"],
                         role=member_data["role"],
                         org_id=org.id,
-                        created_at=datetime.utcnow() - timedelta(days=random.randint(30, 365)),
-                        last_login=datetime.utcnow() - timedelta(hours=random.randint(1, 168))
+                        created_at=datetime.now(UTC).replace(tzinfo=None) - timedelta(days=random.randint(30, 365)),
+                        last_login=datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=random.randint(1, 168))
                     )
                     db.add(user)
                     db.flush()
@@ -168,7 +168,7 @@ def seed_database():
                 # Create 1-3 surveys for each user
                 num_surveys = random.randint(1, 3)
                 for i in range(num_surveys):
-                    survey_date = datetime.utcnow() - timedelta(days=random.randint(1, 180))
+                    survey_date = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=random.randint(1, 180))
                     
                     survey = Survey(
                         user_id=user.id,

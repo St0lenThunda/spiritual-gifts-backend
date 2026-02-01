@@ -127,12 +127,15 @@ def test_bulk_action_activate_success(mock_db, mock_org, mock_user_admin):
          patch("app.routers.organizations.AuditService.log_action"):
         
         # Mock Members
-        user1 = MagicMock(spec=User, id=101, membership_status="pending")
-        user2 = MagicMock(spec=User, id=102, membership_status="pending")
+        user1 = MagicMock(spec=User, id=101, membership_status="pending", email="u1@test.com")
+        user2 = MagicMock(spec=User, id=102, membership_status="pending", email="u2@test.com")
         
-        mock_db.query.return_value.filter.return_value.all.return_value = [user1, user2]
+        # Mock chained filters
+        mock_query = mock_db.query.return_value
+        mock_query.filter.return_value = mock_query
+        mock_query.all.return_value = [user1, user2]
         # Valid active count to allow approval
-        mock_db.query.return_value.filter.return_value.count.return_value = 0
+        mock_query.count.return_value = 0
         
         app.dependency_overrides[get_db] = lambda: mock_db
         app.dependency_overrides[get_current_user] = lambda: mock_user_admin
@@ -140,7 +143,8 @@ def test_bulk_action_activate_success(mock_db, mock_org, mock_user_admin):
         
         response = client.post(
             "/api/v1/organizations/members/bulk-approve",
-            json={"user_ids": [101, 102], "action": "approve"}
+            json={"user_ids": [101, 102], "action": "approve"},
+            headers={"Origin": "http://localhost:5173"}
         )
         
         assert response.status_code == 200

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from app.services.survey_service import SurveyService
 from app.models import Survey, User
 from unittest.mock import MagicMock
@@ -10,9 +10,9 @@ def test_get_org_analytics_active_members():
     
     # 3 Surveys from 2 distinct users
     surveys = [
-        Survey(user_id=1, org_id=org_id, scores={"A": 10}, created_at=datetime.utcnow()),
-        Survey(user_id=1, org_id=org_id, scores={"B": 5}, created_at=datetime.utcnow()),
-        Survey(user_id=2, org_id=org_id, scores={"C": 15}, created_at=datetime.utcnow())
+        Survey(user_id=1, org_id=org_id, scores={"A": 10}, created_at=datetime.now(UTC).replace(tzinfo=None)),
+        Survey(user_id=1, org_id=org_id, scores={"B": 5}, created_at=datetime.now(UTC).replace(tzinfo=None)),
+        Survey(user_id=2, org_id=org_id, scores={"C": 15}, created_at=datetime.now(UTC).replace(tzinfo=None))
     ]
     
     mock_db.query.return_value.filter.return_value.all.return_value = surveys
@@ -29,7 +29,7 @@ def test_get_org_analytics_trends():
     mock_db = MagicMock()
     org_id = "test-org-id"
     
-    current_month = datetime.utcnow()
+    current_month = datetime.now(UTC).replace(tzinfo=None)
     last_month = current_month - timedelta(days=32)
     
     # Surveys in different months
@@ -66,7 +66,7 @@ def test_get_org_analytics_privacy_threshold():
     
     # Case 1: Insufficient Data (3 surveys)
     surveys_low = [
-        Survey(user_id=i, org_id=org_id, scores={"A": 10}, created_at=datetime.utcnow())
+        Survey(user_id=i, org_id=org_id, scores={"A": 10}, created_at=datetime.now(UTC).replace(tzinfo=None))
         for i in range(3)
     ]
     mock_db.query.return_value.filter.return_value.all.return_value = surveys_low
@@ -78,7 +78,7 @@ def test_get_org_analytics_privacy_threshold():
     
     # Case 2: Sufficient Data (5 surveys)
     surveys_ok = [
-        Survey(user_id=i, org_id=org_id, scores={"A": 10}, created_at=datetime.utcnow(), user=User(role="user"))
+        Survey(user_id=i, org_id=org_id, scores={"A": 10}, created_at=datetime.now(UTC).replace(tzinfo=None), user=User(role="user"))
         for i in range(5)
     ]
     mock_db.query.return_value.filter.return_value.all.return_value = surveys_ok

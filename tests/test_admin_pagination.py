@@ -22,7 +22,7 @@ def test_get_logs_pagination(client, db, admin_user):
 
     # Seed logs
     logs = []
-    from datetime import datetime
+    from datetime import datetime, UTC
     for i in range(25):
         logs.append(LogEntry(
             level="INFO",
@@ -31,7 +31,7 @@ def test_get_logs_pagination(client, db, admin_user):
             path="/api/test",
             method="GET",
             status_code=200,
-            timestamp=datetime.utcnow(), 
+            timestamp=datetime.now(UTC).replace(tzinfo=None), 
             # Note: timestamp might be auto-set, but let's be explicit if model allows
             # If model defaults to func.now(), adding manually is fine.
         ))

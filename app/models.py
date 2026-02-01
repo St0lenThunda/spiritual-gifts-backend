@@ -2,8 +2,12 @@ from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Bool
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from .database import Base
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
+
+def utc_now():
+    """Helper to get naive UTC datetime (avoids utcnow() deprecation)."""
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class Organization(Base):
@@ -18,8 +22,8 @@ class Organization(Base):
     branding = Column(JSON, default={}, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     is_demo = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
     
     # New denomination relationship (Model C support)
     denomination_id = Column(UUID(as_uuid=True), ForeignKey("denominations.id"), nullable=True, index=True)
@@ -37,7 +41,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     role = Column(String, default="user", nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
     last_login = Column(DateTime, nullable=True)
     
     # User preferences
@@ -64,7 +68,7 @@ class Survey(Base):
     scores = Column(JSON)
     discernment = Column(JSON, nullable=True)
     assessment_version = Column(String(20), default="1.0", nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
     
     # Multi-tenancy
     org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True, index=True)
@@ -79,7 +83,7 @@ class LogEntry(Base):
     __tablename__ = "log_entries"
 
     id = Column(Integer, primary_key=True, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=utc_now, index=True)
     level = Column(String, index=True)
     event = Column(String, index=True)
     
@@ -114,7 +118,7 @@ class AuditLog(Base):
     action = Column(String(100), nullable=False)
     resource = Column(String(255), nullable=False)
     details = Column(JSON, nullable=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = Column(DateTime, default=utc_now, nullable=False)
 
     # Relationships
     actor = relationship("User", backref="audit_logs")
@@ -162,7 +166,7 @@ class SurveyDraft(Base):
     answers = Column(JSON, default={}, nullable=False)
     current_step = Column(Integer, default=1, nullable=False)
     assessment_version = Column(String(20), default="1.0", nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     # Relationships
     user = relationship("User", backref="survey_draft")

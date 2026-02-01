@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from datetime import datetime, UTC
 from app.main import app
 from app.models import Organization, User
 from app.neon_auth import require_org, UserContext, get_user_context
@@ -321,8 +322,8 @@ class TestAuthenticatedEndpoints:
         new_org.plan = "free"
         new_org.is_active = True
         new_org.stripe_customer_id = None
-        new_org.created_at = datetime.utcnow()
-        new_org.updated_at = datetime.utcnow()
+        new_org.created_at = datetime.now(UTC).replace(tzinfo=None)
+        new_org.updated_at = datetime.now(UTC).replace(tzinfo=None)
         
         # Mock refresh to populate the org properly
         def mock_refresh(obj):

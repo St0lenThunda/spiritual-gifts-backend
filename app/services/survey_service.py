@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from ..models import Survey, User
 
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from ..services.getJSONData import load_questions
 
 
@@ -64,20 +64,23 @@ class SurveyService:
         return scores
 
     @staticmethod
-    def generate_discernment(scores: Dict[str, float]) -> Dict[str, Any]:
+    def generate_discernment(scores: Dict[str, float], active_gift_keys: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Generates a discernment explanation object based on scores.
         Narrative indicators instead of raw math.
-        
-        Thresholds (assuming 8 questions per gift, max 40 per gift):
-        - High: >= 32 (80%)
-        - Moderate: >= 24 (60%)
+        Respects active_gift_keys if provided.
         """
         high = []
         moderate = []
         
         # Filter out 'overall' and sort gifts by score descending
         valid_scores = {k: v for k, v in scores.items() if k.lower() != 'overall'}
+        
+        # Apply whitelist if provided (Constraint Layer)
+        if active_gift_keys:
+            active_set = set(active_gift_keys)
+            valid_scores = {k: v for k, v in valid_scores.items() if k in active_set}
+
         sorted_gifts = sorted(valid_scores.items(), key=lambda x: x[1], reverse=True)
         
         for gift, score in sorted_gifts:
@@ -86,8 +89,8 @@ class SurveyService:
             elif score >= 24:
                 moderate.append(gift)
         
-        # Fallback: if none are >= 24, take top 3 as moderate
-        if not high and not moderate:
+        # Fallback: if none are >= 24, take top 3 as moderate (from active set)
+        if not high and not moderate and sorted_gifts:
             moderate = [item[0] for item in sorted_gifts[:3]]
 
         context_notes = "These results indicate patterns of spiritual interest and effectiveness. " \
@@ -126,7 +129,18 @@ class SurveyService:
         if not scores:
             scores = SurveyService.calculate_scores(answers)
 
-        discernment = SurveyService.generate_discernment(scores)
+        # Resolve Denomination Context for Discernment Whitelisting
+        active_gift_keys = None
+        survey_org_id = org_id or user.org_id
+        if survey_org_id:
+            from ..models import Organization, Denomination
+            org_context = db.get(Organization, survey_org_id)
+            if org_context and org_context.denomination_id:
+                denom = db.get(Denomination, org_context.denomination_id)
+                if denom:
+                    active_gift_keys = denom.active_gift_keys
+
+        discernment = SurveyService.generate_discernment(scores, active_gift_keys)
 
         # Use org_id from parameter or from user's org
         survey_org_id = org_id or user.org_id
@@ -285,19 +299,34 @@ class SurveyService:
         top_gifts_counts = {}
         gift_demographics = {} # New accumulator for demographics
         
+        # Resolve Denomination for filtering (ADR-022)
+        active_gift_keys = None
+        from ..models import Organization, Denomination
+        org = db.get(Organization, org_id)
+        if org and org.denomination_id:
+            denom = db.get(Denomination, org.denomination_id)
+            if denom:
+                active_gift_keys = denom.active_gift_keys
+        
+        active_set = set(active_gift_keys) if active_gift_keys else None
+
         for survey in surveys:
             scores = survey.scores or {}
             
-            # Accumulate totals for averages
+            # Filter and Accumulate totals for averages
             for gift, score in scores.items():
                 if gift.lower() == 'overall':
                     continue
+                if active_set and gift not in active_set:
+                    continue
                 gift_totals[gift] = gift_totals.get(gift, 0) + score
                 
-            # Determine top gift for this survey
+            # Determine top gift for this survey (respecting active set)
             if scores:
-                # Filter out 'overall' before finding max
                 valid_scores = {k: v for k, v in scores.items() if k.lower() != 'overall'}
+                if active_set:
+                    valid_scores = {k: v for k, v in valid_scores.items() if k in active_set}
+                
                 if valid_scores:
                     top_gift = max(valid_scores.items(), key=lambda x: x[1])[0]
                     top_gifts_counts[top_gift] = top_gifts_counts.get(top_gift, 0) + 1
@@ -312,14 +341,12 @@ class SurveyService:
                     # Get user context
                     user = survey.user
                     if user:
-                        # 1. Role Category
-                        role_key = user.role # e.g. "admin", "user"
+                        role_key = user.role
                         gift_demographics[top_gift]["roles"][role_key] = gift_demographics[top_gift]["roles"].get(role_key, 0) + 1
                         
-                        # 2. Tenure Band
-                        # Calculate years since creation
                         if user.created_at:
-                            tenure_years = (datetime.utcnow() - user.created_at).days / 365.25
+                            now_naive = datetime.now(UTC).replace(tzinfo=None)
+                            tenure_years = (now_naive - user.created_at).days / 365.25
                             
                             if tenure_years < 1:
                                 band = "<1_year"
@@ -330,11 +357,17 @@ class SurveyService:
                                 
                             gift_demographics[top_gift]["tenure"][band] = gift_demographics[top_gift]["tenure"].get(band, 0) + 1
         
-        # Calculate averages
+        # Calculate averages (only for active gifts)
         gift_averages = {
             gift: round(total / total_assessments, 1)
             for gift, total in gift_totals.items()
         }
+        
+        # If active_set is present, ensure all active gifts are in the result even with 0
+        if active_set:
+            for gift in active_set:
+                if gift not in gift_averages:
+                    gift_averages[gift] = 0.0
         
         # Sort distribution by count desc
         sorted_distribution = dict(sorted(
@@ -346,27 +379,19 @@ class SurveyService:
         # Calculate active members (unique users who have taken an assessment)
         active_members_count = len(set(s.user_id for s in surveys))
         
-        
         # Initialize last 12 months with 0
-        today = datetime.utcnow()
+        today = datetime.now(UTC)
         trends = {}
         
-        # Generate last 12 months keys accurately
         for i in range(12):
-            # Calculate target year and month
-            # effective_month is 1-based index (e.g. jan=1). 
-            # If today.month is 5 (May), i=0 -> 5. i=4 -> 1 (Jan). i=5 -> 0 (needs wrap to Dec prev year)
-            
-            target_month_idx = today.month - i - 1 # 0-indexed (0=Jan, 11=Dec)
-            
-            # Handle negative wrapping
+            target_month_idx = today.month - i - 1
             year_offset = 0
             while target_month_idx < 0:
                 target_month_idx += 12
                 year_offset -= 1
             
             target_year = today.year + year_offset
-            target_month = target_month_idx + 1 # Convert back to 1-based
+            target_month = target_month_idx + 1
             
             key = f"{target_year}-{target_month:02d}"
             trends[key] = 0
@@ -376,22 +401,17 @@ class SurveyService:
             if month_key in trends:
                 trends[month_key] += 1
             
-        # Convert trends to list of dicts for frontend
         trends_list = [
             {"date": k, "count": v} 
             for k, v in sorted(trends.items())
         ]
         
-        # Privacy & Anonymity Logic (ADR-018)
         MIN_ANONYMITY_THRESHOLD = 5
         insufficient_data = total_assessments < MIN_ANONYMITY_THRESHOLD
         
         if insufficient_data:
-            # Mask demographics to protect individual identity in small sets
             gift_demographics = {} 
-        
 
-        
         return {
             "total_assessments": total_assessments,
             "active_members_count": active_members_count,

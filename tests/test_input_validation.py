@@ -2,13 +2,13 @@ import pytest
 # Using fixtures from conftest.py
 from app.neon_auth import get_current_user
 from app.models import User
-from datetime import datetime
+from datetime import datetime, UTC
 
 @pytest.fixture(autouse=True)
 def override_user(client):
     """Specific override for this test file."""
     def _override():
-        return User(id=1, email="test@example.com", created_at=datetime.utcnow())
+        return User(id=1, email="test@example.com", created_at=datetime.now(UTC).replace(tzinfo=None))
     from app.main import app
     app.dependency_overrides[get_current_user] = _override
     yield

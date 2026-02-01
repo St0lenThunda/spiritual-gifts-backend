@@ -59,9 +59,13 @@ def test_unauthorized_access_logging(client):
         assert log.context.get("reason") == "missing_token"
         assert log.path == "/api/v1/auth/me"
 
-def test_rate_limit_logging(client):
+def test_rate_limit_logging(client, monkeypatch):
     """Test that rate limit breaks are logged."""
     # The limit is 3/10min for /api/v1/auth/send-link
+    async def mock_neon_send(email, headers=None):
+        pass
+    monkeypatch.setattr("app.routers.neon_send_magic_link", mock_neon_send)
+
     for _ in range(3):
         client.post("/api/v1/auth/send-link", json={"email": "rate@test.com"})
     

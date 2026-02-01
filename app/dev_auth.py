@@ -2,7 +2,7 @@
 Development authentication utilities for testing without Neon Auth email service.
 This provides a simple email/password authentication for development purposes.
 """
-from datetime import datetime
+from datetime import datetime, UTC
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import Session
@@ -32,13 +32,13 @@ async def dev_login(email: str, password: str, db: Session) -> dict:
     user = db.query(User).filter(User.email == email).first()
     if not user:
         # Create new user
-        user = User(email=email, created_at=datetime.utcnow())
+        user = User(email=email, created_at=datetime.now(UTC))
         db.add(user)
         db.commit()
         db.refresh(user)
     
     # Update last login
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(UTC)
     db.commit()
     
     # Create JWT token (sub must be string for jose library)

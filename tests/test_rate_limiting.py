@@ -13,7 +13,7 @@ def reset_limiter_before_test():
 def test_rate_limiting_send_link(client, monkeypatch):
     """Test that /api/v1/auth/send-link is rate limited."""
     # Mock neon_send_magic_link to avoid network calls
-    async def mock_neon_send(email):
+    async def mock_neon_send(email, headers=None):
         pass
     
     monkeypatch.setattr("app.routers.neon_send_magic_link", mock_neon_send)

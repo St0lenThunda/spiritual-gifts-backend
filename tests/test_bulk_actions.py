@@ -1,6 +1,6 @@
 import pytest
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -147,7 +147,7 @@ class TestBulkActions:
         user2.role = "user"
         user2.email = "user2@example.com"
         user2.membership_status = "active"
-        user2.created_at = datetime.utcnow()
+        user2.created_at = datetime.now(UTC).replace(tzinfo=None)
         user2.last_login = None
         user2.global_preferences = {}
 

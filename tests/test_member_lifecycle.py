@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime, timedelta, UTC
 from fastapi.testclient import TestClient
 from app.main import app
 from app.models import User, Organization, Survey
@@ -156,8 +157,8 @@ def test_member_assessment_history_ordering(db, client):
     db.flush() # get member.id
     
     # Create 2 Assessments
-    s1 = Survey(user_id=member.id, org_id=org.id, created_at=datetime.utcnow() - timedelta(days=2), answers={}, scores={"Administration": 10})
-    s2 = Survey(user_id=member.id, org_id=org.id, created_at=datetime.utcnow() - timedelta(days=1), answers={}, scores={"Faith": 10})
+    s1 = Survey(user_id=member.id, org_id=org.id, created_at=datetime.now(UTC).replace(tzinfo=None) - timedelta(days=2), answers={}, scores={"Administration": 10})
+    s2 = Survey(user_id=member.id, org_id=org.id, created_at=datetime.now(UTC).replace(tzinfo=None) - timedelta(days=1), answers={}, scores={"Faith": 10})
     db.add_all([s1, s2])
     db.commit()
     

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
@@ -18,7 +18,7 @@ class AuditService:
         safe_details = jsonable_encoder(details) if details else {}
         # Create user-facing AuditLog
         audit = AuditLog(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             actor_id=user.id,
             org_id=user.org_id, 
             action=action,
@@ -84,7 +84,7 @@ class AuditService:
         
         # Create system-facing LogEntry (redundancy required by user)
         system_log = LogEntry(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             level=level,
             event=action,
             user_id=user.id,

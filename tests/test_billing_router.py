@@ -1,13 +1,11 @@
 import pytest
-import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
 from app.main import app
 from app.models import Organization, User
 from app.database import get_db
 from app.neon_auth import get_current_user, require_org
 from app.services.billing_service import BillingService
-from fastapi_csrf_protect import CsrfProtect
 import stripe
 
 client = TestClient(app)
@@ -38,8 +36,7 @@ def mock_user_admin(mock_org):
 def test_create_checkout_session(mock_db, mock_org, mock_user_admin):
     """Test creating a checkout session."""
     
-    with patch("app.routers.billing.BillingService.create_checkout_session") as mock_create, \
-         patch("app.routers.billing.CsrfProtect.validate_csrf", new_callable=AsyncMock) as mock_csrf:
+    with patch("app.routers.billing.BillingService.create_checkout_session") as mock_create:
         
         mock_session = MagicMock()
         mock_session.url = "https://checkout.stripe.com/test"
@@ -50,10 +47,13 @@ def test_create_checkout_session(mock_db, mock_org, mock_user_admin):
         # Mock require_org to return our mock_org
         app.dependency_overrides[require_org] = lambda: mock_org
 
-        # CSRF headers usually handled by frontend, mocking validate_csrf accepts anything
+        # Use valid Origin header for header-based validation
         response = client.post(
             "/api/v1/billing/create-checkout-session?plan=ministry",
-            headers={"X-CSRF-Token": "secret"}
+            headers={
+                "Origin": "http://localhost:5173",
+                "X-Requested-With": "XMLHttpRequest"
+            }
         )
         
         assert response.status_code == 200
@@ -64,8 +64,7 @@ def test_create_checkout_session(mock_db, mock_org, mock_user_admin):
 def test_create_checkout_session_error(mock_db, mock_org, mock_user_admin):
     """Test error handling in checkout session."""
     
-    with patch("app.routers.billing.BillingService.create_checkout_session") as mock_create, \
-         patch("app.routers.billing.CsrfProtect.validate_csrf", new_callable=AsyncMock):
+    with patch("app.routers.billing.BillingService.create_checkout_session") as mock_create:
         
         mock_create.side_effect = ValueError("Invalid Plan")
         
@@ -73,7 +72,10 @@ def test_create_checkout_session_error(mock_db, mock_org, mock_user_admin):
         
         response = client.post(
             "/api/v1/billing/create-checkout-session?plan=bad_plan",
-            headers={"X-CSRF-Token": "secret"}
+            headers={
+                "Origin": "http://localhost:5173",
+                "X-Requested-With": "XMLHttpRequest"
+            }
         )
         
         assert response.status_code == 400
@@ -84,8 +86,7 @@ def test_create_checkout_session_error(mock_db, mock_org, mock_user_admin):
 def test_create_portal_session(mock_db, mock_org, mock_user_admin):
     """Test creating a portal session."""
     
-    with patch("app.routers.billing.BillingService.create_portal_session") as mock_create, \
-         patch("app.routers.billing.CsrfProtect.validate_csrf", new_callable=AsyncMock):
+    with patch("app.routers.billing.BillingService.create_portal_session") as mock_create:
         
         mock_session = MagicMock()
         mock_session.url = "https://billing.stripe.com/test"
@@ -95,7 +96,10 @@ def test_create_portal_session(mock_db, mock_org, mock_user_admin):
         
         response = client.post(
             "/api/v1/billing/create-portal-session",
-            headers={"X-CSRF-Token": "secret"}
+            headers={
+                "Origin": "http://localhost:5173",
+                "X-Requested-With": "XMLHttpRequest"
+            }
         )
         
         assert response.status_code == 200

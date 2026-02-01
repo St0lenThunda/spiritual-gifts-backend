@@ -8,7 +8,7 @@ from app.models import User, Organization, LogEntry
 from app.database import get_db
 from app.neon_auth import get_current_user, get_org_admin, UserContext, get_user_context
 from app.schemas import UserUpdate
-from datetime import datetime
+from datetime import datetime, UTC
 
 client = TestClient(app)
 
@@ -153,7 +153,7 @@ def test_admin_update_user_org_change_success(mock_db, mock_user_super_admin, mo
         id=1, email="target@example.com", role="user", 
         membership_status="active",
         global_preferences={},
-        created_at=datetime.utcnow()
+        created_at=datetime.now(UTC).replace(tzinfo=None)
     )
     mock_db.query.return_value.filter.return_value.first.side_effect = [target_user, mock_org]
     
@@ -188,8 +188,8 @@ def test_create_organization_success_path_coverage(mock_db):
         plan="free",
         is_active=True,
         is_demo=False,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC).replace(tzinfo=None),
+        updated_at=datetime.now(UTC).replace(tzinfo=None),
         branding={}
     )
     # Explicitly set None for relationship-like fields that might be accessed
@@ -214,7 +214,7 @@ def test_get_my_organization_success_path_coverage(mock_db):
     org = Organization(
         id=uuid.uuid4(), name="My Org", slug="my-org", plan="free", 
         is_active=True, is_demo=False,
-        created_at=datetime.utcnow(), updated_at=datetime.utcnow()
+        created_at=datetime.now(UTC).replace(tzinfo=None), updated_at=datetime.now(UTC).replace(tzinfo=None)
     )
     user = User(id=1, role="admin", email="admin@example.com", org_id=org.id)
     user.organization = org
@@ -251,7 +251,9 @@ def test_bulk_reject_exception_coverage(mock_db, mock_user_admin, mock_org):
 
 def test_bulk_approve_no_pending_members(mock_db, mock_user_admin, mock_org):
     """Test bulk_approve_members when query returns no users (Line 608)."""
-    mock_db.query.return_value.filter.return_value.all.return_value = []
+    # Mock chained filters
+    mock_db.query.return_value.filter.return_value = mock_db.query.return_value
+    mock_db.query.return_value.all.return_value = []
     
     app.dependency_overrides[get_db] = lambda: mock_db
     app.dependency_overrides[get_current_user] = lambda: mock_user_admin
@@ -262,7 +264,8 @@ def test_bulk_approve_no_pending_members(mock_db, mock_user_admin, mock_org):
     with patch("app.routers.organizations.get_plan_features", return_value={"bulk_actions": True}):
         response = client.post(
             "/api/v1/organizations/members/bulk-approve",
-            json={"user_ids": [1, 2], "action": "approve"}
+            json={"user_ids": [1, 2], "action": "approve"},
+            headers={"Origin": "http://localhost:5173"}
         )
         assert response.status_code == 200
         assert "No pending members found" in response.json()["message"]
@@ -272,12 +275,14 @@ def test_bulk_approve_no_pending_members(mock_db, mock_user_admin, mock_org):
 def test_bulk_approve_tier_limit_exceeded(mock_db, mock_user_admin, mock_org):
     """Test bulk_approve_members exceeding tier limit (Line 611)."""
     # 2 users to approve
-    user1 = MagicMock(spec=User, id=1)
-    user2 = MagicMock(spec=User, id=2)
-    mock_db.query.return_value.filter.return_value.all.return_value = [user1, user2]
+    user1 = MagicMock(spec=User, id=1, email="u1@test.com")
+    user2 = MagicMock(spec=User, id=2, email="u2@test.com")
     
-    # 9 active users already, limit 10 -> only 1 slot left
-    mock_db.query.return_value.filter.return_value.count.return_value = 9
+    # Setup query mock to handle chaining
+    mock_query = mock_db.query.return_value
+    mock_query.filter.return_value = mock_query
+    mock_query.all.return_value = [user1, user2]
+    mock_query.count.return_value = 9
     
     app.dependency_overrides[get_db] = lambda: mock_db
     app.dependency_overrides[get_current_user] = lambda: mock_user_admin
@@ -287,7 +292,8 @@ def test_bulk_approve_tier_limit_exceeded(mock_db, mock_user_admin, mock_org):
     with patch("app.routers.organizations.get_plan_features", return_value={"bulk_actions": True, "max_users": 10}):
         response = client.post(
             "/api/v1/organizations/members/bulk-approve",
-            json={"user_ids": [1, 2], "action": "approve"}
+            json={"user_ids": [1, 2], "action": "approve"},
+            headers={"Origin": "http://localhost:5173"}
         )
         assert response.status_code == 403
         assert "Tier limit reached" in response.json()["detail"]
@@ -299,7 +305,10 @@ def test_bulk_reject_self_rejection_skipped(mock_db, mock_user_admin, mock_org):
     # Includes self (mock_user_admin.id = 1)
     user1 = MagicMock(spec=User, id=1, email="admin@example.com") 
     user2 = MagicMock(spec=User, id=2, email="other@example.com")
-    mock_db.query.return_value.filter.return_value.all.return_value = [user1, user2]
+    
+    mock_query = mock_db.query.return_value
+    mock_query.filter.return_value = mock_query
+    mock_query.all.return_value = [user1, user2]
     
     app.dependency_overrides[get_db] = lambda: mock_db
     app.dependency_overrides[get_current_user] = lambda: mock_user_admin
@@ -311,7 +320,8 @@ def test_bulk_reject_self_rejection_skipped(mock_db, mock_user_admin, mock_org):
         
         response = client.post(
             "/api/v1/organizations/members/bulk-reject",
-            json={"user_ids": [1, 2], "action": "reject"}
+            json={"user_ids": [1, 2], "action": "reject"},
+            headers={"Origin": "http://localhost:5173"}
         )
         assert response.status_code == 200
         # Only rejected 1 member (self was skipped)

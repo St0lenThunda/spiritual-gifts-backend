@@ -34,20 +34,39 @@ async def create_checkout_session(
     plan: str,
     request: Request,
     org: Organization = Depends(require_org),
+    locale: str = None,
+    product_name: str = None,
+    product_description: str = None,
+    submit_message: str = None,
+    after_submit_message: str = None,
 ):
-    """Create a Stripe checkout session."""
+    """Create a Stripe checkout session with optional i18n customization."""
     
-    # Use referer as base for return URLs or settings
-    base_url = str(request.base_url).rstrip('/')
-    success_url = f"{base_url}/settings/organization?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{base_url}/settings/organization"
+    # Use Referer header to get frontend origin (preferred), or fall back to settings/base_url
+    referer = request.headers.get("referer", "")
+    if referer:
+        # Extract origin from referer (e.g., "http://localhost:5173/path" -> "http://localhost:5173")
+        from urllib.parse import urlparse
+        parsed = urlparse(referer)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+    else:
+        # Fallback to configured frontend URL or request base
+        base_url = getattr(settings, 'FRONTEND_URL', None) or str(request.base_url).rstrip('/')
+    
+    success_url = f"{base_url}/admin/organization?tab=billing&session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{base_url}/admin/organization?tab=billing"
     
     try:
         session = BillingService.create_checkout_session(
             org_id=str(org.id),
             plan=plan,
             success_url=success_url,
-            cancel_url=cancel_url
+            cancel_url=cancel_url,
+            locale=locale,
+            product_name=product_name,
+            product_description=product_description,
+            submit_message=submit_message,
+            after_submit_message=after_submit_message,
         )
         return {"url": session.url}
     except ValueError as e:

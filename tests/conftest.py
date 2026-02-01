@@ -124,3 +124,10 @@ def admin_token_headers(admin_user):
     from app.neon_auth import create_access_token
     token = create_access_token({"sub": str(admin_user.id)})
     return {"Authorization": f"Bearer {token}"}
+
+@pytest.fixture
+def user_token_headers(test_user):
+    """Return auth headers for normal test user."""
+    from app.neon_auth import create_access_token
+    token = create_access_token({"sub": str(test_user.id)})
+    return {"Authorization": f"Bearer {token}"}

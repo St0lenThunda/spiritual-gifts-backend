@@ -5,7 +5,7 @@ Contains business logic for user authentication, including:
 - User lookup and creation
 - Last login tracking
 """
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy.orm import Session
 from ..models import User, Organization
 
@@ -44,7 +44,7 @@ class AuthService:
             user = User(
                 email=email, 
                 role=role, 
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 org_id=org_id
             )
             db.add(user)
@@ -61,5 +61,5 @@ class AuthService:
             db: Database session
             user: User object to update
         """
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(UTC)
         db.commit()

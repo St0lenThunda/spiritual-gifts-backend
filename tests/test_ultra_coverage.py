@@ -31,7 +31,10 @@ def test_join_org_already_in_org(mock_db):
     user = User(id=1, email="test@example.com", org_id=uuid.uuid4())
     app.dependency_overrides[get_current_user] = lambda: user
     
-    response = client.post("/api/v1/organizations/join/some-slug")
+    response = client.post(
+        "/api/v1/organizations/join/some-slug",
+        headers={"Origin": "http://localhost:5173"}
+    )
     assert response.status_code == 400
     assert "already associated" in response.json()["detail"]
     app.dependency_overrides = {}
@@ -44,7 +47,10 @@ def test_join_org_not_found(mock_db):
     
     mock_db.query.return_value.filter.return_value.first.return_value = None
     
-    response = client.post("/api/v1/organizations/join/ghost-slug")
+    response = client.post(
+        "/api/v1/organizations/join/ghost-slug",
+        headers={"Origin": "http://localhost:5173"}
+    )
     assert response.status_code == 404
     assert "not found" in response.json()["detail"]
     app.dependency_overrides = {}
@@ -59,7 +65,10 @@ def test_approve_member_rbac(mock_db, org_admin):
     from app.neon_auth import require_org
     app.dependency_overrides[require_org] = lambda: org
     
-    response = client.post("/api/v1/organizations/members/1/approve")
+    response = client.post(
+        "/api/v1/organizations/members/1/approve",
+        headers={"Origin": "http://localhost:5173"}
+    )
     assert response.status_code == 403
     assert "Only admins" in response.json()["detail"]
     app.dependency_overrides = {}
@@ -72,9 +81,15 @@ def test_approve_member_not_found(mock_db, org_admin):
     from app.neon_auth import require_org
     app.dependency_overrides[require_org] = lambda: org
     
-    mock_db.query.return_value.filter.return_value.first.return_value = None
+    # Mock chained filters
+    mock_query = mock_db.query.return_value
+    mock_query.filter.return_value = mock_query
+    mock_query.first.return_value = None
     
-    response = client.post("/api/v1/organizations/members/999/approve")
+    response = client.post(
+        "/api/v1/organizations/members/999/approve",
+        headers={"Origin": "http://localhost:5173"}
+    )
     assert response.status_code == 404
     assert "User not found" in response.json()["detail"]
     app.dependency_overrides = {}
@@ -82,16 +97,22 @@ def test_approve_member_not_found(mock_db, org_admin):
 def test_approve_member_already_active(mock_db, org_admin):
     """Line 384: User is already active."""
     admin_user, org = org_admin
-    target_user = User(id=2, membership_status="active", org_id=org.id)
+    target_user = MagicMock(spec=User, id=2, membership_status="active", org_id=org.id)
     
     app.dependency_overrides[get_current_user] = lambda: admin_user
     app.dependency_overrides[get_db] = lambda: mock_db
     from app.neon_auth import require_org
     app.dependency_overrides[require_org] = lambda: org
     
-    mock_db.query.return_value.filter.return_value.first.return_value = target_user
+    # Mock chained filters
+    mock_query = mock_db.query.return_value
+    mock_query.filter.return_value = mock_query
+    mock_query.first.return_value = target_user
     
-    response = client.post("/api/v1/organizations/members/2/approve")
+    response = client.post(
+        "/api/v1/organizations/members/2/approve",
+        headers={"Origin": "http://localhost:5173"}
+    )
     assert response.status_code == 200
     assert "already active" in response.json()["message"]
     app.dependency_overrides = {}
@@ -99,20 +120,24 @@ def test_approve_member_already_active(mock_db, org_admin):
 def test_approve_member_tier_limit(mock_db, org_admin):
     """Line 392: Tier limit reached."""
     admin_user, org = org_admin
-    target_user = User(id=2, membership_status="pending", org_id=org.id)
+    target_user = MagicMock(spec=User, id=2, membership_status="pending", org_id=org.id)
     
     app.dependency_overrides[get_current_user] = lambda: admin_user
     app.dependency_overrides[get_db] = lambda: mock_db
     from app.neon_auth import require_org
     app.dependency_overrides[require_org] = lambda: org
     
-    # First call to filter().first() gets target_user
-    # Second call to filter().count() (triggered by line 389) gets count
-    mock_db.query.return_value.filter.return_value.first.return_value = target_user
-    mock_db.query.return_value.filter.return_value.count.return_value = 10 # Limit is 10
+    # Mock chained filters
+    mock_query = mock_db.query.return_value
+    mock_query.filter.return_value = mock_query
+    mock_query.first.return_value = target_user
+    mock_query.count.return_value = 10 # Limit is 10
     
     with patch("app.routers.organizations.get_plan_features", return_value={"max_users": 10}):
-        response = client.post("/api/v1/organizations/members/2/approve")
+        response = client.post(
+            "/api/v1/organizations/members/2/approve",
+            headers={"Origin": "http://localhost:5173"}
+        )
         assert response.status_code == 403
         assert "Tier limit" in response.json()["detail"]
     
@@ -132,7 +157,11 @@ def test_admin_update_user_org_not_found(mock_db):
     # first() called for User, then for Organization
     mock_db.query.return_value.filter.return_value.first.side_effect = [target_user, None]
     
-    response = client.patch("/api/v1/admin/users/1", json={"org_id": str(uuid.uuid4())})
+    response = client.patch(
+        "/api/v1/admin/users/1", 
+        json={"org_id": str(uuid.uuid4())},
+        headers={"Origin": "http://localhost:5173"}
+    )
     assert response.status_code == 404
     assert "Organization not found" in response.json()["detail"]
     app.dependency_overrides = {}
@@ -147,7 +176,10 @@ def test_reject_member_rbac(mock_db, org_admin):
     from app.neon_auth import require_org
     app.dependency_overrides[require_org] = lambda: org
     
-    response = client.post("/api/v1/organizations/members/1/reject")
+    response = client.post(
+        "/api/v1/organizations/members/1/reject",
+        headers={"Origin": "http://localhost:5173"}
+    )
     assert response.status_code == 403
     app.dependency_overrides = {}
 
@@ -159,9 +191,15 @@ def test_reject_member_not_found(mock_db, org_admin):
     from app.neon_auth import require_org
     app.dependency_overrides[require_org] = lambda: org
     
-    mock_db.query.return_value.filter.return_value.first.return_value = None
+    # Mock chained filters
+    mock_query = mock_db.query.return_value
+    mock_query.filter.return_value = mock_query
+    mock_query.first.return_value = None
     
-    response = client.post("/api/v1/organizations/members/999/reject")
+    response = client.post(
+        "/api/v1/organizations/members/999/reject",
+        headers={"Origin": "http://localhost:5173"}
+    )
     assert response.status_code == 404
     app.dependency_overrides = {}
 
@@ -173,9 +211,15 @@ def test_reject_member_self(mock_db, org_admin):
     from app.neon_auth import require_org
     app.dependency_overrides[require_org] = lambda: org
     
-    mock_db.query.return_value.filter.return_value.first.return_value = admin_user
+    # Mock chained filters
+    mock_query = mock_db.query.return_value
+    mock_query.filter.return_value = mock_query
+    mock_query.first.return_value = admin_user
     
-    response = client.post(f"/api/v1/organizations/members/{admin_user.id}/reject")
+    response = client.post(
+        f"/api/v1/organizations/members/{admin_user.id}/reject",
+        headers={"Origin": "http://localhost:5173"}
+    )
     assert response.status_code == 400
     assert "Cannot reject/remove yourself" in response.json()["detail"]
     app.dependency_overrides = {}
@@ -200,8 +244,12 @@ def test_get_member_assessments_not_found(mock_db, org_admin):
     from app.neon_auth import require_org
     app.dependency_overrides[require_org] = lambda: org
     
-    mock_db.query.return_value.filter.return_value.first.return_value = None
+    # Mock chained filters
+    mock_query = mock_db.query.return_value
+    mock_query.filter.return_value = mock_query
+    mock_query.first.return_value = None
     
     response = client.get("/api/v1/organizations/me/members/999/assessments")
     assert response.status_code == 404
     app.dependency_overrides = {}
+

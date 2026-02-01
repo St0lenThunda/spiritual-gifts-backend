@@ -443,10 +443,6 @@ async def reject_member(
     user.membership_status = "active" # Reset for their next attempt/standalone use
     user.role = "user"
     
-    user.org_id = None
-    user.membership_status = "active" # Reset for their next attempt/standalone use
-    user.role = "user"
-    
     AuditService.log_action(
         db=db,
         user=current_user,
@@ -499,22 +495,6 @@ async def get_member_assessments(
     ).order_by(Survey.created_at.desc()).all()
     
     # Format response with top gift for each assessment
-    result = []
-    for assessment in assessments:
-        scores = assessment.scores or {}
-        # Filter out 'overall' before finding max
-        valid_scores = {k: v for k, v in scores.items() if k.lower() != 'overall'}
-        top_gift = max(valid_scores, key=valid_scores.get) if valid_scores else None
-        top_score = valid_scores.get(top_gift, 0) if top_gift else 0
-        
-        result.append({
-            "id": assessment.id,
-            "created_at": assessment.created_at,
-            "scores": scores,
-            "top_gift": top_gift,
-            "top_score": top_score
-        })
-    
     result = []
     for assessment in assessments:
         scores = assessment.scores or {}

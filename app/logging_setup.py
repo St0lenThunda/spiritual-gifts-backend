@@ -2,7 +2,7 @@ import structlog
 import logging
 import sys
 from typing import Any, Dict
-from datetime import datetime
+from datetime import datetime, UTC
 from contextvars import ContextVar
 from sqlalchemy.orm import Session
 from . import database
@@ -55,7 +55,7 @@ def db_logger_processor(logger: Any, method_name: str, event_dict: Dict[str, Any
             u_email = event_dict.get("user_email") or user_email_ctx.get()
             
             log_entry = LogEntry(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 level=method_name.upper(),
                 event=event_dict.get("event"),
                 user_id=u_id,

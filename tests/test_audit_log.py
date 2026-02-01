@@ -1,6 +1,6 @@
 import pytest
 from app.models import AuditLog, User, Organization
-from datetime import datetime
+from datetime import datetime, UTC
 
 @pytest.fixture
 def org(db):
@@ -27,7 +27,7 @@ def test_audit_log_creation(db, user, org):
         org_id=org.id,
         action="test_action",
         resource="test_resource",
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(UTC).replace(tzinfo=None)
     )
     db.add(entry)
     db.commit()

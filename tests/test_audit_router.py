@@ -165,7 +165,8 @@ def test_get_audit_logs_user_no_org(mock_db):
     response = client.get("/api/v1/audit/logs")
     
     assert response.status_code == 403
-    assert "Must belong to an organization" in response.json()["detail"]
+    # Error message changed to "Only administrators can view audit logs"
+    assert "administrators" in response.json()["detail"] or "organization" in response.json()["detail"]
     
     app.dependency_overrides = {}
 

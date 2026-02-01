@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 import pytest
 from app.models import Survey, User
 from app.services import SurveyService
@@ -7,7 +7,7 @@ def test_survey_pagination(db, test_user):
     """Test pagination logic for user surveys."""
     
     # Create 25 surveys for the user
-    base_time = datetime.utcnow()
+    base_time = datetime.now(UTC).replace(tzinfo=None)
     for i in range(25):
         survey = Survey(
             user_id=test_user.id,

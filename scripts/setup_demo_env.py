@@ -9,7 +9,7 @@ Setup script for Demo Environment and User Migration.
 import sys
 import os
 import random
-from datetime import datetime
+from datetime import datetime, UTC
 
 # Add parent directory to path
 if __name__ == "__main__":
@@ -102,7 +102,7 @@ def setup_demo_env():
                     email=seed["email"],
                     role=seed["role"],
                     org_id=seed["org_id"],
-                    created_at=datetime.utcnow()
+                    created_at=datetime.now(UTC).replace(tzinfo=None)
                 )
                 db.add(u)
                 print(f"  ✅ Created {seed['desc']}: {seed['email']}")
@@ -128,7 +128,7 @@ def setup_demo_env():
                     answers={"question_1": "answer_a", "question_2": "answer_b"},
                     scores={"overall": randint(50, 100)},
                     assessment_version="1.0",
-                    created_at=datetime.utcnow()
+                    created_at=datetime.now(UTC).replace(tzinfo=None)
                 )
                 db.add(assessment)
         db.commit()

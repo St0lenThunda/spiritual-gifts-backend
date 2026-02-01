@@ -1,24 +1,17 @@
 """
 Tests to achieve 100% backend coverage.
-Covers Redis paths, CSRF token endpoint, and CSRF exception handling.
+Covers Redis paths and header-based validation.
+Note: CSRF was replaced with header-based validation in v1.10.0
 """
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
 
-def test_csrf_token_endpoint(client, monkeypatch):
-    """Cover routers/__init__.py:47-51 - CSRF token endpoint."""
-    from fastapi_csrf_protect import CsrfProtect
-    
-    # Mock the methods that require secret key configuration
-    monkeypatch.setattr(CsrfProtect, "generate_csrf_tokens", lambda self: ("test-token", "signed-test-token"))
-    monkeypatch.setattr(CsrfProtect, "set_csrf_cookie", lambda self, token, response: None)
-    
-    response = client.get("/api/v1/csrf-token")
-    assert response.status_code == 200
-    data = response.json()
-    assert "csrf_token" in data
-    assert data["detail"] == "CSRF cookie set"
+def test_header_validation_missing_origin(client):
+    """Test that requests without Origin or X-Requested-With header work for GET."""
+    # GET requests don't require validation
+    response = client.get("/api/v1/denominations")
+    assert response.status_code in [200, 401]  # May need auth, but not 403
 
 
 def test_safe_json_coder_decode_string():
@@ -31,21 +24,26 @@ def test_safe_json_coder_decode_string():
     assert result == {"foo": "bar"}
 
 
-def test_csrf_exception_handler(client, monkeypatch):
-    """Cover main.py:169-175 - CSRF exception handler."""
-    from fastapi_csrf_protect import CsrfProtect
-    from fastapi_csrf_protect.exceptions import CsrfProtectError
+def test_send_magic_link_with_valid_headers(client, monkeypatch):
+    """Test sending magic link with proper Origin header."""
+    # Mock neon_send_magic_link to succeed
+    async def mock_neon_send_success(email, headers=None):
+        pass  # Simulate successful send
     
-    # Make validate_csrf raise an exception
-    async def mock_validate_csrf_fail(self, request):
-        raise CsrfProtectError(message="Token missing", status_code=403)
+    monkeypatch.setattr("app.routers.neon_send_magic_link", mock_neon_send_success)
     
-    monkeypatch.setattr(CsrfProtect, "validate_csrf", mock_validate_csrf_fail)
-    
-    # Now make a POST request that should fail CSRF validation
-    response = client.post("/api/v1/auth/send-link", json={"email": "csrf@test.com"})
-    assert response.status_code == 403
-    assert "CSRF" in response.json().get("detail", "")
+    response = client.post(
+        "/api/v1/auth/send-link", 
+        json={"email": "success@test.com"},
+        headers={
+            "Origin": "http://localhost:5173",
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    )
+    assert response.status_code == 200
+    assert response.json()["message"] == "Magic link sent successfully"
+    assert response.json()["email"] == "success@test.com"
+
 
 
 def test_limiter_redis_success(monkeypatch):
@@ -155,17 +153,3 @@ async def test_main_redis_cache_failure(monkeypatch):
             mock_cache_init.assert_called()
         finally:
             app.config.settings.REDIS_ENABLED = original
-
-
-def test_send_magic_link_success(client, monkeypatch):
-    """Cover routers/__init__.py:76-77 - success path for sending magic link."""
-    # Mock neon_send_magic_link to succeed
-    async def mock_neon_send_success(email):
-        pass  # Simulate successful send
-    
-    monkeypatch.setattr("app.routers.neon_send_magic_link", mock_neon_send_success)
-    
-    response = client.post("/api/v1/auth/send-link", json={"email": "success@test.com"})
-    assert response.status_code == 200
-    assert response.json()["message"] == "Magic link sent successfully"
-    assert response.json()["email"] == "success@test.com"

@@ -38,7 +38,7 @@ class SafeJsonCoder(JsonCoder):
 # ============================================================================
 
 @router.post("/auth/send-link")
-@limiter.limit("100/10minutes")
+@limiter.limit("3/10minutes")
 async def send_magic_link(
     request: Request, 
     login_data: schemas.LoginRequest

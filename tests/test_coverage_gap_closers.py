@@ -55,12 +55,9 @@ async def test_magic_link_verify_missing_email(monkeypatch):
     
     req = schemas.TokenVerifyRequest(token="bad-token")
     
-    # Create a mock CsrfProtect with async validate_csrf
-    mock_csrf = MagicMock()
-    mock_csrf.validate_csrf = AsyncMock(return_value=None)
-    
     with pytest.raises(HTTPException) as exc:
-        await verify_magic_link(req, MagicMock(), MagicMock(), MagicMock(), mock_csrf)
+        # verify_magic_link(req, db, request, response) - CSRF removed
+        await verify_magic_link(req, MagicMock(), MagicMock(), MagicMock())
     assert exc.value.status_code == 400
     assert "Email missing" in exc.value.detail
 
